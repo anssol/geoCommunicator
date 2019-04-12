@@ -20,7 +20,8 @@ import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
-import java.text.SimpleDateFormat
+import java.text.*
+import java.time.format.FormatStyle
 import java.util.*
 
 class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
@@ -32,7 +33,8 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
     private lateinit var deviceID : String
 
     private val TAG = "LocationUpdateService"
-    private val firebaseConstructor = FirebaseConstructor()
+//    val firebaseConstructor = FirebaseConstructor("")
+    private lateinit var firebaseConstructor : FirebaseConstructor
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         createLocationCallback()
@@ -41,6 +43,7 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
         Log.d(TAG, "Service started")
         Log.d(TAG, "Received Device ID: " + intent.getStringExtra("deviceID"))
         deviceID = intent.getStringExtra("deviceID")
+        firebaseConstructor = FirebaseConstructor(deviceID)
         buildGoogleApiClient()
         return Service.START_STICKY
     }
@@ -128,13 +131,20 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
                 val lastLocation = locationResult.lastLocation
 
                 /* Round decimals to 2 places */
-                val altitude = String.format("%.2f", latLng.latitude).toDouble()
-                val horizontalAccuracy = String.format("%.2f", lastLocation.accuracy).toFloat()
+                // Remember to set the Locale!
+                val altitude = String.format(Locale.US, "%.2f", lastLocation.altitude).toDouble()
+                val horizontalAccuracy = String.format(Locale.US, "%.2f", lastLocation.accuracy).toFloat()
 
+                Log.d(TAG, "Updating Firease with Location Information")
                 /* Update database with location information */
+                firebaseConstructor.updateUserInfo(User(latitude = latLng.latitude.toString(),
+                    longitude = latLng.longitude.toString(), horizontalAccuracy = horizontalAccuracy.toString(), speed = lastLocation.speed.toString(),
+                    sampleDateTime = epochToDate(lastLocation.time), altitude = altitude.toString()))
+                /*
                 firebaseConstructor.updateUserInfo(User(deviceID = deviceID, latitude = latLng.latitude,
                     longitude = latLng.longitude, horizontalAccuracy = horizontalAccuracy, speed = lastLocation.speed,
                     sampleDateTime = epochToDate(lastLocation.time), altitude = altitude))
+                */
 
                 /* Broadcast Location Parameters */
                 val intent = Intent("Location")
@@ -145,6 +155,7 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
                 intent.putExtra("speed", lastLocation.speed.toString())
                 intent.putExtra("locationTime", lastLocation.time.toString())
                 intent.putExtra("altitude", altitude.toString())
+                intent.putExtra("deviceID", deviceID)
 
                 LocalBroadcastManager.getInstance(this@LocationUpdateService).sendBroadcast(intent)
                 }

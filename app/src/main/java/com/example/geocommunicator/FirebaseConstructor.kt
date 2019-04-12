@@ -4,14 +4,12 @@ import android.util.Log
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 
-class FirebaseConstructor constructor() {
+class FirebaseConstructor constructor(userID: String) {
 
     private val onlineDriverDatabaseReference: DatabaseReference = FirebaseDatabase
         .getInstance()
         .reference
-        .child("online_users")
-    //    .child(userId)
-    //    .child("UserActivity")
+        .child(userID)
     init {
         onlineDriverDatabaseReference
             .onDisconnect()
@@ -20,7 +18,13 @@ class FirebaseConstructor constructor() {
     fun updateUserInfo(user: User) {
         onlineDriverDatabaseReference
             .setValue(user)
-        Log.e("User Info", " Updated")
+        Log.e("UserInfo", " Updated")
+    }
+    fun updateValue(user: User, input : String) {
+        if (input == "deviceID") {
+            onlineDriverDatabaseReference
+                .setValue(user)
+        }
     }
     fun removeUser() {
         onlineDriverDatabaseReference

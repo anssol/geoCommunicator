@@ -12,6 +12,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.os.BatteryManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -27,25 +28,44 @@ import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.ActivityRecognition
 import android.provider.Settings
 import android.widget.TextView
+import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.ContextCompat.startForegroundService
 import com.example.geocommunicator.Constants.Companion.LOCATION_PERMISSION_REQUEST_CODE
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import java.text.SimpleDateFormat
+import java.util.*
 
+// Todo: Accelerometer data
+// Todo: Battery, CPU
+// Todo: Distance to particular place?
 class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener {
 
     // Clients and intents
     private lateinit var mGoogleApiClient: GoogleApiClient
-    private lateinit var locationServiceIntent: Intent
-    private lateinit var activityServiceIntent: Intent
+    private var locationServiceIntent: Intent? = null
+    private var activityServiceIntent: Intent? = null
 
     // Functions
     private lateinit var functions: Functions
 
     private val TAG = "MainActivity"
     private val RTAG = "MainReceiver"
+    private val BTAG = "BatteryReceiver"
 
     // For displaying text on screen
     private lateinit var latUpdateTextView : TextView
     private lateinit var lngUpdateTextView : TextView
+
+    // Permissions
+    private var isLocationPermissionGranted = false
+    private var isDevicePermissionGranted = false
+
+
+    // Database reference
+    //private lateinit var firebaseConstructor : FirebaseConstructor
 
     private val mMessageReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -55,7 +75,8 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     // Get Activity data
                     val message = intent.getStringExtra("Message")
                     Log.d(RTAG, "Got message: $message")
-                    displayNotification(message) }
+                    displayNotification(message)
+                }
 
                 "Location" -> {
                     // Get extra data included in the Intent
@@ -65,6 +86,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     val speed = intent.getStringExtra("speed")
                     val time = intent.getStringExtra("locationTime")
                     val altitude = intent.getStringExtra("altitude")
+                    val deviceID = intent.getStringExtra("deviceID")
 
                     /* Update TextViews */
                     val strLatitude = "Latitude: $latitude"
@@ -75,13 +97,31 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     lngUpdateTextView.invalidate()
                     lngUpdateTextView.setText(strLongitude)
 
+                    /* Round decimals to 2 places */
+                    // Remember to set the Locale!
+                    /*
+                    val lat = String.format(Locale.US, "%.2f", latitude).toDouble()
+                    val lng = String.format(Locale.US, "%.2f", longitude).toDouble()
+                    val altitudeVal = String.format(Locale.US, "%.2f", altitude).toDouble()
+                    val timeVal = String.format(Locale.US, "%.2f", altitude).toLong()
+
+                    val horizontalAccuracy = String.format(Locale.US, "%.2f", accuracy).toFloat()
+                    val speedVal = String.format(Locale.US, "%.2f", speed).toFloat()
+
+
+                    Log.d(TAG, "Updating Firease with Location Information")
+                    /* Update database with location information */
+                    firebaseConstructor.updateUserInfo(User(deviceID = deviceID, latitude = lat,
+                        longitude = lng, horizontalAccuracy = horizontalAccuracy, speed = speedVal,
+                        sampleDateTime = epochToDate(timeVal), altitude = altitudeVal))
+                    */
                     /* Logs */
                     Log.d(RTAG, "Got longitude: $longitude")
                     Log.d(RTAG, "Got latitude: $latitude")
                     Log.d(RTAG, "Got accuracy: $accuracy")
                     Log.d(RTAG, "Got speed: $speed")
                     Log.d(RTAG, "Got time: $time")
-                    Log.d(RTAG, "Got latitude: $altitude")
+                    Log.d(RTAG, "Got altitude: $altitude")
                 }
             }
         }
@@ -91,25 +131,38 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Put permissions here
         // Ask user to enable GPS if it's disabled.
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             buildAlertMessageNoGps()
         }
 
-        // Put permissions here
-        getDevicePermission()
+        // If Marshmallow+, ask for permission
         getLocationPermission()
+        getDevicePermission()
 
+        if (isDevicePermissionGranted && isLocationPermissionGranted) {
+            initiateServices()
+        } else {
+            // If Marshmallow+, ask for permission
+            getLocationPermission()
+            getDevicePermission()
+        }
+    }
+
+    private fun initiateServices() {
         val deviceID = getDeviceID()
         Log.d(TAG, "Got ID: $deviceID")
+        //firebaseConstructor = FirebaseConstructor(deviceID)
+        //Log.d(TAG, "Created database instance with ID: $deviceID")
 
         /* TextView parameters */
         latUpdateTextView = findViewById(R.id.latTextView)
         lngUpdateTextView = findViewById(R.id.lngTextView)
 
         locationServiceIntent = Intent(this, LocationUpdateService::class.java)
-        locationServiceIntent.putExtra("deviceID", deviceID)
+        locationServiceIntent!!.putExtra("deviceID", deviceID)
 
         /**
         ------------------------------------------------------------------
@@ -130,6 +183,15 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         val intentFilter = IntentFilter()
         intentFilter.addAction("Activity")
         intentFilter.addAction("Location")
+
+        // Add battery actions
+        intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED)
+        intentFilter.addAction(Intent.ACTION_POWER_CONNECTED)
+        intentFilter.addAction(Intent.ACTION_POWER_DISCONNECTED)
+        intentFilter.addAction(Intent.ACTION_BATTERY_LOW)
+        intentFilter.addAction(Intent.ACTION_BATTERY_OKAY)
+
+        // Battery level
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, intentFilter)
 
         // Initialize Intent client
@@ -139,15 +201,68 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
             .addOnConnectionFailedListener(this)
             .build()
         mGoogleApiClient.connect()
+    }
 
+    override fun onRestart() {
+        super.onRestart()
+        // If Marshmallow+, ask for permission
+        getLocationPermission()
+        getDevicePermission()
+        if (isDevicePermissionGranted && isLocationPermissionGranted) {
+            initiateServices()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        getLocationPermission()
+        getDevicePermission()
+        if (isDevicePermissionGranted && isLocationPermissionGranted) {
+            initiateServices()
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        getLocationPermission()
+        getDevicePermission()
+        if (isDevicePermissionGranted && isLocationPermissionGranted) {
+            initiateServices()
+        }
+    }
+
+    private fun getDevicePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ContextCompat.checkSelfPermission(
+                    this@MainActivity,
+                    android.Manifest.permission.READ_PHONE_STATE
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                isDevicePermissionGranted = true
+                Log.d(TAG, "DevicePermission is granted")
+                return
+            } else {
+                Log.d(TAG, "Requesting Device Permission")
+                ActivityCompat.requestPermissions(
+                    this@MainActivity,
+                    arrayOf(android.Manifest.permission.READ_PHONE_STATE),
+                    DEVICE_PERMISSION_REQUEST_CODE
+                )
+            }
+        } else {
+            isDevicePermissionGranted = true
+        }
     }
 
     @SuppressLint("HardwareIds")
     private fun getDeviceID() : String {
-
-        if (ContextCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.READ_PHONE_STATE)
+            != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this@MainActivity, android.Manifest.permission.READ_PHONE_STATE)) {
-            } else { ActivityCompat.requestPermissions(this@MainActivity, arrayOf(android.Manifest.permission.READ_PHONE_STATE), DEVICE_PERMISSION_REQUEST_CODE) } }
+            } else {
+                ActivityCompat.requestPermissions(this@MainActivity, arrayOf(android.Manifest.permission.READ_PHONE_STATE), DEVICE_PERMISSION_REQUEST_CODE)
+            }
+        }
         val telephonyManager: TelephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         return telephonyManager.getDeviceId()
     }
@@ -214,44 +329,29 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         alert.show()
     }
 
-    private fun getDevicePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(
-                    this.applicationContext,
-                    android.Manifest.permission.READ_PHONE_STATE
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                return
-            } else {
-                Log.d(TAG, "Requesting Device Permission")
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(android.Manifest.permission.READ_PHONE_STATE),
-                    DEVICE_PERMISSION_REQUEST_CODE
-                )
-            }
-        }
-    }
-
     private fun getLocationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
+            if (ActivityCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                    this,
+                    this@MainActivity,
                     android.Manifest.permission.ACCESS_COARSE_LOCATION
                 )
                 == PackageManager.PERMISSION_GRANTED
             ) {
+                isLocationPermissionGranted = true
+                Log.d(TAG, "LocationPermission is granted")
                 return
             } else {
                 Log.d(TAG, "Requesting Location Permission")
                 ActivityCompat.requestPermissions(
-                    this, arrayOf(
+                    this@MainActivity, arrayOf(
                         android.Manifest.permission.ACCESS_FINE_LOCATION,
                         android.Manifest.permission.ACCESS_COARSE_LOCATION
                     ), LOCATION_PERMISSION_REQUEST_CODE
                 )
             }
+        } else {
+            isLocationPermissionGranted = true
         }
     }
 
@@ -262,12 +362,14 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
             LOCATION_PERMISSION_REQUEST_CODE ->
                 if (grantResults.isNotEmpty()) {
                     for (i in grantResults) {
+                        Log.d(TAG, i.toString())
                         if (i != PackageManager.PERMISSION_GRANTED) {
                             Log.d(TAG, "onRequestPermissionsResult: Location Permission Failed")
                             return
                         }
                     }
                     Log.d(TAG, "onRequestPermissionsResult: Location Permission Granted")
+                    isLocationPermissionGranted = true
                 }
             DEVICE_PERMISSION_REQUEST_CODE ->
                 if (grantResults.isNotEmpty()) {
@@ -278,8 +380,18 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                         }
                     }
                     Log.d(TAG, "onRequestPermissionsResult: Device Permission Granted")
+                    getDeviceID()
+                    isDevicePermissionGranted = true
                 }
         }
     }
 
+    private fun epochToDate(timestamp : Long): String {
+        val stamp = timestamp/1000
+        val date: Date = java.util.Date(stamp*1000L)
+        val sdf: SimpleDateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val formattedDate = sdf.format(date)
+        //Log.d(TAG, formattedDate)
+        return formattedDate
+    }
 }
