@@ -28,7 +28,10 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.ActivityRecognition
 import android.provider.Settings
+import android.view.View
+import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.ContextCompat.startForegroundService
@@ -55,12 +58,13 @@ import kotlin.collections.ArrayList
 // Todo: Battery, CPU
 // Todo: Distance to particular place?
 class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
-    GoogleApiClient.OnConnectionFailedListener {
+    GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
 
     // Clients and intents
     private lateinit var mGoogleApiClient: GoogleApiClient
     private var locationServiceIntent: Intent? = null
     private var activityServiceIntent: Intent? = null
+    private var sensorServiceIntent: Intent? = null
 
     // Functions
     private lateinit var functions: Functions
@@ -72,6 +76,11 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     // For displaying text on screen
     private lateinit var latUpdateTextView : TextView
     private lateinit var lngUpdateTextView : TextView
+    private lateinit var accUpdateTextView : TextView
+
+    // Buttons
+    private lateinit var startButton : Button
+    private lateinit var stopButton : Button
 
     // Permissions
     private var isLocationPermissionGranted = false
@@ -109,10 +118,10 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                                     deviceID, altitude.toString(), accuracy.toString(),
                                     latitude.toString(), longitude.toString(), time,
                                     speed.toString())
-                    Log.d(TAG, message)
+                    //Log.d(TAG, message)
 
                     // Update database with sensor information
-                    SendDeviceDetails().execute(url, message)
+                    //SendDeviceDetails().execute(url, message)
 
                     /* Update TextViews */
                     val strLatitude = "Latitude: $latitude"
@@ -144,12 +153,36 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     */
 
                     /* Logs */
+                    /*
                     Log.d(RTAG, "Got longitude: $longitude")
                     Log.d(RTAG, "Got latitude: $latitude")
                     Log.d(RTAG, "Got accuracy: $accuracy")
                     Log.d(RTAG, "Got speed: $speed")
                     Log.d(RTAG, "Got time: $time")
                     Log.d(RTAG, "Got altitude: $altitude")
+                    */
+                }
+                "Acceleration" -> {
+                    val acceleration = intent.getStringExtra("acceleration")
+                    val strAcceleration = "Acceleration: $acceleration"
+                    accUpdateTextView.invalidate()
+                    accUpdateTextView.setText(strAcceleration)
+                    //Log.d(RTAG, "Got acceleration: $acceleration")
+                }
+                Intent.ACTION_BATTERY_OKAY -> {
+                    Log.d(BTAG, "Battery OK")
+                }
+                Intent.ACTION_BATTERY_LOW -> {
+                    Log.d(BTAG, "Battery LOW")
+                }
+                Intent.ACTION_BATTERY_CHANGED -> {
+                    Log.d(BTAG, "Battery Changed")
+                }
+                Intent.ACTION_POWER_CONNECTED -> {
+                    Log.d(BTAG, "Power Connected")
+                }
+                Intent.ACTION_POWER_DISCONNECTED -> {
+                    Log.d(BTAG, "Power Disconnected")
                 }
             }
         }
@@ -178,12 +211,22 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                 .build()
         mGoogleApiClient.connect()
 
-        if (isDevicePermissionGranted && isLocationPermissionGranted) {
-            initiateServices()
-        } else {
-            // If Marshmallow+, ask for permission
-            getLocationPermission()
-            getDevicePermission()
+        /* Buttons */
+        startButton = findViewById(R.id.button1)
+        stopButton = findViewById(R.id.button2)
+
+        startButton.setOnClickListener(this)
+        stopButton.setOnClickListener(this)
+    }
+
+    override fun onClick(v: View) {
+        when (v.id) {
+            R.id.button1 -> {
+                startUpdates(v)
+            }
+            R.id.button2 -> {
+                stopUpdates(v)
+            }
         }
     }
 
@@ -196,9 +239,14 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         /* TextView parameters */
         latUpdateTextView = findViewById(R.id.latTextView)
         lngUpdateTextView = findViewById(R.id.lngTextView)
+        accUpdateTextView = findViewById(R.id.accTextView)
 
+        // Location Service
         locationServiceIntent = Intent(this, LocationUpdateService::class.java)
         locationServiceIntent!!.putExtra("deviceID", deviceID)
+
+        // Sensor/Accelerometer Service
+        sensorServiceIntent = Intent(this, AccelerometerService::class.java)
 
         /**
         ------------------------------------------------------------------
@@ -211,14 +259,17 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
          **/
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(locationServiceIntent)
+            startForegroundService(sensorServiceIntent)
         } else {
             startService(locationServiceIntent)
+            startService(sensorServiceIntent)
         }
 
         // Local Broadcast manager
         val intentFilter = IntentFilter()
         intentFilter.addAction("Activity")
         intentFilter.addAction("Location")
+        intentFilter.addAction("Acceleration")
 
         // Add battery actions
         intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED)
@@ -229,6 +280,27 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
 
         // Battery level
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, intentFilter)
+    }
+
+    private fun stopServices() {
+        stopService(Intent(this, AccelerometerService::class.java))
+        stopService(Intent(this, LocationUpdateService::class.java))
+    }
+
+    private fun startUpdates(v : View) {
+        Toast.makeText(this, "Updating Database", Toast.LENGTH_LONG).show()
+        if (isDevicePermissionGranted && isLocationPermissionGranted) {
+            initiateServices()
+        } else {
+            // If Marshmallow+, ask for permission
+            getLocationPermission()
+            getDevicePermission()
+        }
+    }
+
+    private fun stopUpdates(v : View) {
+        Toast.makeText(this, "Stopping Updates", Toast.LENGTH_LONG).show()
+        stopServices()
     }
 
     private fun createJSON(IMEI : String, altitude : String, accuracy : String,
