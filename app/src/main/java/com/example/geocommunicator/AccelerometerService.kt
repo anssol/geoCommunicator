@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat.getSystemService
 
 class AccelerometerService : Service(), SensorEventListener {
 
+    // BAJS
     private val mSensorManager: SensorManager? = null
     var count = 0
     private val mSensorListener: ShakeEventListener? = null
