@@ -7,7 +7,7 @@ import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.URL
 
-// Update database
+// Update Database
 class SendDeviceDetails : AsyncTask<String, Void, String>() {
 
     private var TAG = "Asynctask"

@@ -65,6 +65,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     private var locationServiceIntent: Intent? = null
     private var activityServiceIntent: Intent? = null
     private var sensorServiceIntent: Intent? = null
+    private var batteryServiceIntent: Intent? = null
 
     // Functions
     private lateinit var functions: Functions
@@ -248,6 +249,9 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         // Sensor/Accelerometer Service
         sensorServiceIntent = Intent(this, AccelerometerService::class.java)
 
+        // Battery Service
+        batteryServiceIntent = Intent(this, BatteryMonitoringService::class.java)
+
         /**
         ------------------------------------------------------------------
         Not allowed to run services in background on Android API > 26
@@ -260,9 +264,11 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(locationServiceIntent)
             startForegroundService(sensorServiceIntent)
+            startForegroundService(batteryServiceIntent)
         } else {
             startService(locationServiceIntent)
             startService(sensorServiceIntent)
+            startService(batteryServiceIntent)
         }
 
         // Local Broadcast manager
@@ -285,6 +291,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     private fun stopServices() {
         stopService(Intent(this, AccelerometerService::class.java))
         stopService(Intent(this, LocationUpdateService::class.java))
+        //stopServices(Intent(this, BatteryMonitoringService::class.java))
     }
 
     private fun startUpdates(v : View) {
