@@ -153,7 +153,7 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
                 intent.putExtra("longitude", latLng.longitude.toString())
                 intent.putExtra("accuracy", horizontalAccuracy.toString())
                 intent.putExtra("speed", lastLocation.speed.toString())
-                intent.putExtra("locationTime", lastLocation.time.toString())
+                intent.putExtra("locationTime", epochToDate(lastLocation.time))
                 intent.putExtra("altitude", altitude.toString())
                 intent.putExtra("deviceID", deviceID)
 

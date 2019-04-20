@@ -12,6 +12,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.os.AsyncTask
 import android.os.BatteryManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -36,6 +37,19 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import java.text.SimpleDateFormat
 import java.util.*
+import com.loopj.android.http.*;
+import cz.msebera.android.httpclient.NameValuePair
+import cz.msebera.android.httpclient.client.methods.HttpPost
+import cz.msebera.android.httpclient.message.BasicNameValuePair
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
+import java.io.*
+import java.lang.Exception
+import java.net.HttpURLConnection
+import java.net.URL
+import java.nio.charset.Charset
+import kotlin.collections.ArrayList
 
 // Todo: Accelerometer data
 // Todo: Battery, CPU
@@ -63,6 +77,8 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     private var isLocationPermissionGranted = false
     private var isDevicePermissionGranted = false
 
+    // For HTTP Request
+    private val url = "http://130.240.134.129:8080/se.ltu.ssr.webapp/rest/fiwareproxy/ngsi10/updateContext/"
 
     // Database reference
     //private lateinit var firebaseConstructor : FirebaseConstructor
@@ -88,6 +104,16 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     val altitude = intent.getStringExtra("altitude")
                     val deviceID = intent.getStringExtra("deviceID")
 
+                    // Create JSON object to be sent
+                    val message = createJSON(
+                                    deviceID, altitude.toString(), accuracy.toString(),
+                                    latitude.toString(), longitude.toString(), time,
+                                    speed.toString())
+                    Log.d(TAG, message)
+
+                    // Update database with sensor information
+                    SendDeviceDetails().execute(url, message)
+
                     /* Update TextViews */
                     val strLatitude = "Latitude: $latitude"
                     latUpdateTextView.invalidate()
@@ -99,6 +125,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
 
                     /* Round decimals to 2 places */
                     // Remember to set the Locale!
+
                     /*
                     val lat = String.format(Locale.US, "%.2f", latitude).toDouble()
                     val lng = String.format(Locale.US, "%.2f", longitude).toDouble()
@@ -115,6 +142,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                         longitude = lng, horizontalAccuracy = horizontalAccuracy, speed = speedVal,
                         sampleDateTime = epochToDate(timeVal), altitude = altitudeVal))
                     */
+
                     /* Logs */
                     Log.d(RTAG, "Got longitude: $longitude")
                     Log.d(RTAG, "Got latitude: $latitude")
@@ -141,6 +169,14 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         // If Marshmallow+, ask for permission
         getLocationPermission()
         getDevicePermission()
+
+        // Initialize Intent client
+        mGoogleApiClient = GoogleApiClient.Builder(this)
+                .addApi(ActivityRecognition.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build()
+        mGoogleApiClient.connect()
 
         if (isDevicePermissionGranted && isLocationPermissionGranted) {
             initiateServices()
@@ -193,43 +229,82 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
 
         // Battery level
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, intentFilter)
-
-        // Initialize Intent client
-        mGoogleApiClient = GoogleApiClient.Builder(this)
-            .addApi(ActivityRecognition.API)
-            .addConnectionCallbacks(this)
-            .addOnConnectionFailedListener(this)
-            .build()
-        mGoogleApiClient.connect()
     }
 
-    override fun onRestart() {
-        super.onRestart()
-        // If Marshmallow+, ask for permission
-        getLocationPermission()
-        getDevicePermission()
-        if (isDevicePermissionGranted && isLocationPermissionGranted) {
-            initiateServices()
-        }
+    private fun createJSON(IMEI : String, altitude : String, accuracy : String,
+                           latitude : String, longitude : String, sampleDateTime : String,
+                           speed : String) : String {
+
+        val item = JSONObject()
+        item.put("type", "Gateway")
+        item.put("isPattern", "false")
+        item.put("id", "UppsalaUni_01")
+
+        // Create attributes
+        val imei = JSONObject()
+        imei.put("name", "imei")
+        imei.put("type", "string")
+        imei.put("value", IMEI)
+
+        val jAltitude = JSONObject()
+        jAltitude.put("name", "altitude")
+        jAltitude.put("type", "string")
+        jAltitude.put("value", altitude)
+
+        val jHorizontalAccuracy = JSONObject()
+        jHorizontalAccuracy.put("name", "horizontalAccuracy")
+        jHorizontalAccuracy.put("type", "string")
+        jHorizontalAccuracy.put("value", accuracy)
+
+        val jLatitude = JSONObject()
+        jLatitude.put("name", "latitude")
+        jLatitude.put("type", "string")
+        jLatitude.put("value", latitude)
+
+        val jLongitude = JSONObject()
+        jLongitude.put("name", "longitude")
+        jLongitude.put("type", "string")
+        jLongitude.put("value", longitude)
+
+        val jSampleDateTime = JSONObject()
+        jSampleDateTime.put("name", "sampleDateTime")
+        jSampleDateTime.put("type", "string")
+        jSampleDateTime.put("value", sampleDateTime)
+
+        val jSpeed = JSONObject()
+        jSpeed.put("name", "speed")
+        jSpeed.put("type", "string")
+        jSpeed.put("value", speed)
+
+        val attributes = JSONArray()
+        attributes.put(imei)
+        attributes.put(jAltitude)
+        attributes.put(jHorizontalAccuracy)
+        attributes.put(jLatitude)
+        attributes.put(jLongitude)
+        attributes.put(jSampleDateTime)
+        attributes.put(jSpeed)
+
+        // Add all attributes
+        item.put("attributes", attributes)
+
+        val elements = JSONArray()
+        elements.put(item)
+        val contextElements = JSONObject()
+        contextElements.put("contextElements", elements)
+        contextElements.put("updateAction", "APPEND")
+
+        val auth = JSONObject()
+        auth.put("username", Constants.USERNAME)
+        auth.put("password", Constants.PASSWORD)
+        contextElements.put("auth", auth)
+
+        val message: String
+        message = contextElements.toString()
+
+        return message
     }
 
-    override fun onResume() {
-        super.onResume()
-        getLocationPermission()
-        getDevicePermission()
-        if (isDevicePermissionGranted && isLocationPermissionGranted) {
-            initiateServices()
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        getLocationPermission()
-        getDevicePermission()
-        if (isDevicePermissionGranted && isLocationPermissionGranted) {
-            initiateServices()
-        }
-    }
 
     private fun getDevicePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -340,6 +415,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
             ) {
                 isLocationPermissionGranted = true
                 Log.d(TAG, "LocationPermission is granted")
+                getDevicePermission()
                 return
             } else {
                 Log.d(TAG, "Requesting Location Permission")
@@ -369,6 +445,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                         }
                     }
                     Log.d(TAG, "onRequestPermissionsResult: Location Permission Granted")
+                    getDevicePermission()
                     isLocationPermissionGranted = true
                 }
             DEVICE_PERMISSION_REQUEST_CODE ->
@@ -384,14 +461,5 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     isDevicePermissionGranted = true
                 }
         }
-    }
-
-    private fun epochToDate(timestamp : Long): String {
-        val stamp = timestamp/1000
-        val date: Date = java.util.Date(stamp*1000L)
-        val sdf: SimpleDateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        val formattedDate = sdf.format(date)
-        //Log.d(TAG, formattedDate)
-        return formattedDate
     }
 }
