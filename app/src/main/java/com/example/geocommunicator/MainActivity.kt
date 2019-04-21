@@ -54,8 +54,9 @@ import java.net.URL
 import java.nio.charset.Charset
 import kotlin.collections.ArrayList
 
-// Todo: Accelerometer data
-// Todo: Battery, CPU
+// Todo: Update Firebase with all collected information, while maintaining data structure
+// Todo: Fix so app can be downloaded as apk
+// Todo: CPU?
 // Todo: Distance to particular place?
 class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
@@ -67,14 +68,16 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     private var sensorServiceIntent: Intent? = null
     private var batteryServiceIntent: Intent? = null
 
-    // Functions
+    // Functions (add external file later)
     private lateinit var functions: Functions
 
+    // Logging tags for debugging
     private val TAG = "MainActivity"
     private val RTAG = "MainReceiver"
     private val BTAG = "BatteryReceiver"
+    private val LTAG = "LocationReceiver"
 
-    // For displaying text on screen
+    // To display text on screen
     private lateinit var latUpdateTextView : TextView
     private lateinit var lngUpdateTextView : TextView
     private lateinit var accUpdateTextView : TextView
@@ -87,10 +90,10 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     private var isLocationPermissionGranted = false
     private var isDevicePermissionGranted = false
 
-    // For HTTP Request
+    // URL LTU database server
     private val url = "http://130.240.134.129:8080/se.ltu.ssr.webapp/rest/fiwareproxy/ngsi10/updateContext/"
 
-    // Database reference
+    // Firebase reference
     //private lateinit var firebaseConstructor : FirebaseConstructor
 
     private val mMessageReceiver = object : BroadcastReceiver() {
@@ -133,10 +136,15 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     lngUpdateTextView.invalidate()
                     lngUpdateTextView.setText(strLongitude)
 
-                    /* Round decimals to 2 places */
-                    // Remember to set the Locale!
+                    /* Logs */
+                    Log.d(LTAG, "Got longitude: $longitude")
+                    Log.d(LTAG, "Got latitude: $latitude")
+                    Log.d(LTAG, "Got accuracy: $accuracy")
+                    Log.d(LTAG, "Got speed: $speed")
+                    Log.d(LTAG, "Got time: $time")
+                    Log.d(LTAG, "Got altitude: $altitude")
 
-                    /*
+                    /* Todo: Update Firebase
                     val lat = String.format(Locale.US, "%.2f", latitude).toDouble()
                     val lng = String.format(Locale.US, "%.2f", longitude).toDouble()
                     val altitudeVal = String.format(Locale.US, "%.2f", altitude).toDouble()
@@ -152,16 +160,6 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                         longitude = lng, horizontalAccuracy = horizontalAccuracy, speed = speedVal,
                         sampleDateTime = epochToDate(timeVal), altitude = altitudeVal))
                     */
-
-                    /* Logs */
-                    /*
-                    Log.d(RTAG, "Got longitude: $longitude")
-                    Log.d(RTAG, "Got latitude: $latitude")
-                    Log.d(RTAG, "Got accuracy: $accuracy")
-                    Log.d(RTAG, "Got speed: $speed")
-                    Log.d(RTAG, "Got time: $time")
-                    Log.d(RTAG, "Got altitude: $altitude")
-                    */
                 }
                 "Acceleration" -> {
                     val acceleration = intent.getStringExtra("acceleration")
@@ -169,21 +167,23 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     accUpdateTextView.invalidate()
                     accUpdateTextView.setText(strAcceleration)
                     //Log.d(RTAG, "Got acceleration: $acceleration")
+
                 }
-                Intent.ACTION_BATTERY_OKAY -> {
-                    Log.d(BTAG, "Battery OK")
-                }
-                Intent.ACTION_BATTERY_LOW -> {
-                    Log.d(BTAG, "Battery LOW")
-                }
-                Intent.ACTION_BATTERY_CHANGED -> {
-                    Log.d(BTAG, "Battery Changed")
-                }
-                Intent.ACTION_POWER_CONNECTED -> {
-                    Log.d(BTAG, "Power Connected")
-                }
-                Intent.ACTION_POWER_DISCONNECTED -> {
-                    Log.d(BTAG, "Power Disconnected")
+                "Battery" -> {
+                    // Check battery level
+                    val batteryLevel = intent.getStringExtra("batteryLevel")
+                    Log.d(BTAG, "BatteryLevel: " + batteryLevel)
+
+                    // Check if battery is charging.
+                    val isCharging = intent.getStringExtra("isCharging")
+                    val usbCharge = intent.getStringExtra("usbCharge")
+                    val acCharge = intent.getStringExtra("acCharge")
+                    Log.d(BTAG, "Battery is charging: " + isCharging)
+                    if (isCharging == "true") {
+                        // If battery is charging. Which source?
+                        Log.d(BTAG, "USB charge: " + usbCharge)
+                        Log.d(BTAG, "AC charge: " + acCharge)
+                    }
                 }
             }
         }
@@ -276,15 +276,8 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         intentFilter.addAction("Activity")
         intentFilter.addAction("Location")
         intentFilter.addAction("Acceleration")
+        intentFilter.addAction("Battery")
 
-        // Add battery actions
-        intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED)
-        intentFilter.addAction(Intent.ACTION_POWER_CONNECTED)
-        intentFilter.addAction(Intent.ACTION_POWER_DISCONNECTED)
-        intentFilter.addAction(Intent.ACTION_BATTERY_LOW)
-        intentFilter.addAction(Intent.ACTION_BATTERY_OKAY)
-
-        // Battery level
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, intentFilter)
     }
 
