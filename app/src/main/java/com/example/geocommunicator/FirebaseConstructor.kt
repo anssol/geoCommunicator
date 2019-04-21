@@ -17,14 +17,12 @@ class FirebaseConstructor constructor(userID: String) {
     }
     fun updateUserInfo(user: User) {
         onlineDriverDatabaseReference
-            .setValue(user)
+                .setValue(user)
         Log.e("UserInfo", " Updated")
     }
     fun updateValue(user: User, input : String) {
-        if (input == "deviceID") {
-            onlineDriverDatabaseReference
+        onlineDriverDatabaseReference
                 .setValue(user)
-        }
     }
     fun removeUser() {
         onlineDriverDatabaseReference

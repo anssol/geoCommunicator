@@ -53,9 +53,11 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.Charset
 import kotlin.collections.ArrayList
+import android.icu.text.DecimalFormat
+import androidx.annotation.RequiresApi
 
-// Todo: Update Firebase with all collected information, while maintaining data structure
-// Todo: Fix so app can be downloaded as apk
+// Todo: Update the database with all the information every 1 second?
+// Todo: Adapt SampleDateTime to fit with the update frequency
 // Todo: CPU?
 // Todo: Distance to particular place?
 class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
@@ -94,9 +96,11 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     private val url = "http://130.240.134.129:8080/se.ltu.ssr.webapp/rest/fiwareproxy/ngsi10/updateContext/"
 
     // Firebase reference
-    //private lateinit var firebaseConstructor : FirebaseConstructor
+    private lateinit var firebaseConstructor : FirebaseConstructor
+    private var user = User()
 
     private val mMessageReceiver = object : BroadcastReceiver() {
+        @RequiresApi(Build.VERSION_CODES.N)
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
 
@@ -109,23 +113,33 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
 
                 "Location" -> {
                     // Get extra data included in the Intent
-                    val latitude = intent.getStringExtra("latitude")
-                    val longitude = intent.getStringExtra("longitude")
-                    val accuracy = intent.getStringExtra("accuracy")
-                    val speed = intent.getStringExtra("speed")
-                    val time = intent.getStringExtra("locationTime")
-                    val altitude = intent.getStringExtra("altitude")
-                    val deviceID = intent.getStringExtra("deviceID")
+                    var latitude = intent.getStringExtra("latitude")
+                    var longitude = intent.getStringExtra("longitude")
+                    var accuracy = intent.getStringExtra("accuracy")
+                    var speed = intent.getStringExtra("speed")
+                    var time = intent.getStringExtra("locationTime")
+                    var altitude = intent.getStringExtra("altitude")
+                    var deviceID = intent.getStringExtra("deviceID")
 
-                    // Create JSON object to be sent
-                    val message = createJSON(
-                                    deviceID, altitude.toString(), accuracy.toString(),
-                                    latitude.toString(), longitude.toString(), time,
-                                    speed.toString())
-                    //Log.d(TAG, message)
+                    /* Optional: Format number of decimal points according to needs */
+                    val formatter = DecimalFormat.getInstance(Locale.US)
+                    formatter.maximumFractionDigits = 2
+                    altitude = formatter.format(altitude.toDouble())
+                    accuracy = formatter.format(accuracy.toFloat())
 
-                    // Update database with sensor information
-                    //SendDeviceDetails().execute(url, message)
+                    /*
+                    latitude = formatter.format(latitude.toDouble())
+                    longitude = formatter.format(longitude.toDouble())
+                    speed = formatter.format(speed.toFloat())
+                    */
+
+                    /* Logs */
+                    Log.d(LTAG, "Got longitude: $longitude")
+                    Log.d(LTAG, "Got latitude: $latitude")
+                    Log.d(LTAG, "Got accuracy: $accuracy")
+                    Log.d(LTAG, "Got speed: $speed")
+                    Log.d(LTAG, "Got time: $time")
+                    Log.d(LTAG, "Got altitude: $altitude")
 
                     /* Update TextViews */
                     val strLatitude = "Latitude: $latitude"
@@ -136,37 +150,32 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     lngUpdateTextView.invalidate()
                     lngUpdateTextView.setText(strLongitude)
 
-                    /* Logs */
-                    Log.d(LTAG, "Got longitude: $longitude")
-                    Log.d(LTAG, "Got latitude: $latitude")
-                    Log.d(LTAG, "Got accuracy: $accuracy")
-                    Log.d(LTAG, "Got speed: $speed")
-                    Log.d(LTAG, "Got time: $time")
-                    Log.d(LTAG, "Got altitude: $altitude")
+                    /* Create JSON object to be sent */
+                    val message = createJSON(
+                            deviceID, altitude.toString(), accuracy.toString(),
+                            latitude.toString(), longitude.toString(), time,
+                            speed.toString())
+                    Log.d(TAG, message)
 
-                    /* Todo: Update Firebase
-                    val lat = String.format(Locale.US, "%.2f", latitude).toDouble()
-                    val lng = String.format(Locale.US, "%.2f", longitude).toDouble()
-                    val altitudeVal = String.format(Locale.US, "%.2f", altitude).toDouble()
-                    val timeVal = String.format(Locale.US, "%.2f", altitude).toLong()
+                    /* Update database with sensor information */
+                    //SendDeviceDetails().execute(url, message)
 
-                    val horizontalAccuracy = String.format(Locale.US, "%.2f", accuracy).toFloat()
-                    val speedVal = String.format(Locale.US, "%.2f", speed).toFloat()
-
-
-                    Log.d(TAG, "Updating Firease with Location Information")
+                    Log.d(LTAG, "Updating Firease with Location Information")
                     /* Update database with location information */
-                    firebaseConstructor.updateUserInfo(User(deviceID = deviceID, latitude = lat,
-                        longitude = lng, horizontalAccuracy = horizontalAccuracy, speed = speedVal,
-                        sampleDateTime = epochToDate(timeVal), altitude = altitudeVal))
-                    */
+                    user = user.copy(deviceID = deviceID, latitude = latitude.toDouble(),
+                            longitude = longitude.toDouble(), horizontalAccuracy = accuracy.toDouble(), speed = speed.toFloat(),
+                            sampleDateTime = time, altitude = altitude.toDouble())
+                    firebaseConstructor.updateUserInfo(user)
                 }
+
                 "Acceleration" -> {
                     val acceleration = intent.getStringExtra("acceleration")
                     val strAcceleration = "Acceleration: $acceleration"
                     accUpdateTextView.invalidate()
                     accUpdateTextView.setText(strAcceleration)
                     //Log.d(RTAG, "Got acceleration: $acceleration")
+                    user = user.copy(acceleration = acceleration.toDouble())
+                    firebaseConstructor.updateUserInfo(user)
 
                 }
                 "Battery" -> {
@@ -184,6 +193,8 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                         Log.d(BTAG, "USB charge: " + usbCharge)
                         Log.d(BTAG, "AC charge: " + acCharge)
                     }
+                    user = user.copy(batteryLevel = batteryLevel, isCharging = isCharging)
+                    firebaseConstructor.updateUserInfo(user)
                 }
             }
         }
@@ -234,8 +245,8 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     private fun initiateServices() {
         val deviceID = getDeviceID()
         Log.d(TAG, "Got ID: $deviceID")
-        //firebaseConstructor = FirebaseConstructor(deviceID)
-        //Log.d(TAG, "Created database instance with ID: $deviceID")
+        firebaseConstructor = FirebaseConstructor(deviceID)
+        Log.d(TAG, "Created database instance with ID: $deviceID")
 
         /* TextView parameters */
         latUpdateTextView = findViewById(R.id.latTextView)
@@ -376,7 +387,6 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
 
         return message
     }
-
 
     private fun getDevicePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

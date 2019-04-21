@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Looper
@@ -33,17 +34,15 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
     private lateinit var deviceID : String
 
     private val TAG = "LocationUpdateService"
-//    val firebaseConstructor = FirebaseConstructor("")
-    private lateinit var firebaseConstructor : FirebaseConstructor
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+        if (Build.VERSION.SDK_INT >= 26) {
+            startForeground()
+        }
         createLocationCallback()
-//        startForeground(1, Notification())
-        startForeground()
         Log.d(TAG, "Service started")
         Log.d(TAG, "Received Device ID: " + intent.getStringExtra("deviceID"))
         deviceID = intent.getStringExtra("deviceID")
-        firebaseConstructor = FirebaseConstructor(deviceID)
         buildGoogleApiClient()
         return Service.START_STICKY
     }
@@ -56,18 +55,6 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
         buildGoogleApiClient()
     }
     */
-
-    private fun startForeground() {
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0)
-        startForeground(1, NotificationCompat.Builder(this, "Channel_ID")
-            .setOngoing(true)
-            .setSmallIcon(R.drawable.notification_icon_background)
-            .setContentTitle(getString(R.string.app_name))
-            .setContentText("Service is running in background")
-            .setContentIntent(pendingIntent)
-            .build())
-    }
 
     private fun buildGoogleApiClient() {
         // Todo: Add Activity API
@@ -128,23 +115,11 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
                 if (locationResult!!.lastLocation == null) return
                 val latLng = LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
                 Log.d("Location", latLng.latitude.toString() + " , " + latLng.longitude)
+
+                /* Extract additional GPS parameters */
                 val lastLocation = locationResult.lastLocation
-
-                /* Round decimals to 2 places */
-                // Remember to set the Locale!
-                val altitude = String.format(Locale.US, "%.2f", lastLocation.altitude).toDouble()
-                val horizontalAccuracy = String.format(Locale.US, "%.2f", lastLocation.accuracy).toFloat()
-
-                Log.d(TAG, "Updating Firease with Location Information")
-                /* Update database with location information */
-                firebaseConstructor.updateUserInfo(User(latitude = latLng.latitude.toString(),
-                    longitude = latLng.longitude.toString(), horizontalAccuracy = horizontalAccuracy.toString(), speed = lastLocation.speed.toString(),
-                    sampleDateTime = epochToDate(lastLocation.time), altitude = altitude.toString()))
-                /*
-                firebaseConstructor.updateUserInfo(User(deviceID = deviceID, latitude = latLng.latitude,
-                    longitude = latLng.longitude, horizontalAccuracy = horizontalAccuracy, speed = lastLocation.speed,
-                    sampleDateTime = epochToDate(lastLocation.time), altitude = altitude))
-                */
+                val horizontalAccuracy = lastLocation.accuracy
+                val altitude = lastLocation.altitude
 
                 /* Broadcast Location Parameters */
                 val intent = Intent("Location")
@@ -169,6 +144,18 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
         val formattedDate = sdf.format(date)
         //Log.d(TAG, formattedDate)
         return formattedDate
+    }
+
+    private fun startForeground() {
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0)
+        startForeground(1, NotificationCompat.Builder(this, "Channel_ID")
+                .setOngoing(true)
+                .setSmallIcon(R.drawable.notification_icon_background)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText("Service is running in background")
+                .setContentIntent(pendingIntent)
+                .build())
     }
 }
 

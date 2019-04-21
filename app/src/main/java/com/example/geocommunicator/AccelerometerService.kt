@@ -1,5 +1,6 @@
 package com.example.geocommunicator
 
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -11,7 +12,9 @@ import android.hardware.SensorManager
 import android.content.Context.SENSOR_SERVICE
 import androidx.core.content.ContextCompat.getSystemService
 import android.content.Context.SENSOR_SERVICE
+import android.os.Build
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import java.util.*
 
@@ -42,7 +45,9 @@ class AccelerometerService : Service(), SensorEventListener {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Log.d(TAG, "onStartCommand")
+        if (Build.VERSION.SDK_INT >= 26) {
+            startForeground()
+        }
 
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
@@ -112,5 +117,17 @@ class AccelerometerService : Service(), SensorEventListener {
         Log.d(TAG, "onDestroy")
         mSensorManager.unregisterListener(this)
         super.onDestroy()
+    }
+
+    private fun startForeground() {
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0)
+        startForeground(1, NotificationCompat.Builder(this, "Channel_ID")
+                .setOngoing(true)
+                .setSmallIcon(R.drawable.notification_icon_background)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText("Service is running in background")
+                .setContentIntent(pendingIntent)
+                .build())
     }
 }
