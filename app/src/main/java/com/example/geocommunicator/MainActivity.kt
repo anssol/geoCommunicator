@@ -164,7 +164,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     /* Update database with location information */
                     user = user.copy(deviceID = deviceID, latitude = latitude.toDouble(),
                             longitude = longitude.toDouble(), horizontalAccuracy = accuracy.toDouble(), speed = speed.toFloat(),
-                            sampleDateTime = time, altitude = altitude.toDouble())
+                            gpsUpdateTime = time, altitude = altitude.toDouble())
                     firebaseConstructor.updateUserInfo(user)
                 }
 
@@ -178,6 +178,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     firebaseConstructor.updateUserInfo(user)
 
                 }
+
                 "Battery" -> {
                     // Check battery level
                     val batteryLevel = intent.getStringExtra("batteryLevel")

@@ -138,9 +138,8 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
         }
 
     private fun epochToDate(timestamp : Long): String {
-        val stamp = timestamp/1000
-        val date: Date = java.util.Date(stamp*1000L)
-        val sdf: SimpleDateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val date: Date = java.util.Date(timestamp)
+        val sdf: SimpleDateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
         val formattedDate = sdf.format(date)
         //Log.d(TAG, formattedDate)
         return formattedDate

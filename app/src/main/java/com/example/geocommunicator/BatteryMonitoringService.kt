@@ -16,6 +16,7 @@ class BatteryMonitoringService : Service() {
 
     private val TAG = "BatteryService"
     private lateinit var handler: Handler
+    private lateinit var functions: Functions
 
     // Check battery status every X milliseconds
     private val CHECK_BATTERY_INTERVAL : Long = 5000
@@ -27,6 +28,7 @@ class BatteryMonitoringService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (Build.VERSION.SDK_INT >= 26) {
+            //functions.startForeground(this)
             startForeground()
         }
         return Service.START_STICKY
