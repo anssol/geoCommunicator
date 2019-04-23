@@ -6,12 +6,13 @@
     </shared>
   </component>
   <component name="AndroidLogFilters">
+    <option name="TOOL_WINDOW_CUSTOM_FILTER" value="AccelerometerService" />
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e165f192-951f-46bf-bf3a-7ead80e89b38" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/BatteryMonitoringService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/BatteryMonitoringService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/AccelerometerService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/AccelerometerService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/Functions.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/Functions.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/LocationUpdateService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/LocationUpdateService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/MainActivity.kt" afterDir="false" />
@@ -40,8 +41,20 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/MainActivity.kt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-5670">
-              <caret line="9" column="30" lean-forward="true" selection-start-line="9" selection-end-line="10" />
+            <state relative-caret-position="375">
+              <caret line="325" column="16" lean-forward="true" selection-start-line="325" selection-start-column="16" selection-end-line="326" selection-end-column="50" />
+              <folding>
+                <element signature="e#37#2251#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/AccelerometerService.kt">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="255">
+              <caret line="158" column="46" selection-start-line="158" selection-start-column="46" selection-end-line="158" selection-end-column="46" />
             </state>
           </provider>
         </entry>
@@ -49,8 +62,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/User.kt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="135">
-              <caret line="9" column="16" selection-start-line="9" selection-start-column="16" selection-end-line="9" selection-end-column="16" />
+            <state relative-caret-position="195">
+              <caret line="13" column="45" selection-start-line="13" selection-start-column="45" selection-end-line="13" selection-end-column="45" />
             </state>
           </provider>
         </entry>
@@ -58,36 +71,20 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/BatteryMonitoringService.kt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1384">
+            <state relative-caret-position="1215">
               <caret line="93" column="1" selection-start-line="93" selection-start-column="1" selection-end-line="93" selection-end-column="1" />
               <folding>
                 <element signature="e#37#407#0" expanded="true" />
-                <element signature="e#3559#3587#1" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/LocationUpdateService.kt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1144">
-              <caret line="148" column="42" selection-start-line="148" selection-start-column="42" selection-end-line="148" selection-end-column="42" />
-              <folding>
-                <element signature="e#6279#6307#1" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/Functions.kt">
+        <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/LocationUpdateService.kt">
           <provider selected="true" editor-type-id="text-editor">
-            <state>
-              <caret column="35" lean-forward="true" selection-start-column="35" selection-end-column="35" />
-              <folding>
-                <element signature="e#37#466#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="-300">
+              <caret line="85" column="5" selection-start-line="85" selection-start-column="5" selection-end-line="85" selection-end-column="5" />
             </state>
           </provider>
         </entry>
@@ -112,8 +109,12 @@
       <find>locale</find>
       <find>format</find>
       <find>firebase</find>
-      <find>foreground</find>
       <find>getstring</find>
+      <find>startforegro</find>
+      <find>locationUpdateTime</find>
+      <find>onaccuracy</find>
+      <find>foreground</find>
+      <find>date</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -134,12 +135,12 @@
         <option value="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/sendDeviceDetails.kt" />
         <option value="$PROJECT_DIR$/build.gradle" />
         <option value="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/FirebaseConstructor.kt" />
+        <option value="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/BatteryMonitoringService.kt" />
+        <option value="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/Functions.kt" />
+        <option value="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/LocationUpdateService.kt" />
         <option value="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/AccelerometerService.kt" />
         <option value="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/User.kt" />
         <option value="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/MainActivity.kt" />
-        <option value="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/LocationUpdateService.kt" />
-        <option value="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/BatteryMonitoringService.kt" />
-        <option value="$PROJECT_DIR$/src/main/java/com/example/geocommunicator/Functions.kt" />
       </list>
     </option>
   </component>
@@ -155,8 +156,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="PackagesPane" />
-      <pane id="ProjectPane" />
       <pane id="AndroidView">
         <subPane>
           <expand>
@@ -183,16 +182,19 @@
           <select />
         </subPane>
       </pane>
+      <pane id="ProjectPane" />
       <pane id="Scope" />
+      <pane id="PackagesPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="android.project.structure.last.selected" value="SDK Location" />
     <property name="android.project.structure.proportion" value="0.15" />
     <property name="android.sdk.path" value="$USER_HOME$/Android/Sdk" />
-    <property name="device.picker.selection" value="33004e6a8fa86285" />
+    <property name="device.picker.selection" value="21ed67d40e017ece" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="not.eligible.for.single.variant.sync" value="true" />
+    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
     <property name="settings.editor.selected.configurable" value="instant.run" />
   </component>
   <component name="RunDashboard">
@@ -295,7 +297,7 @@
     <frame x="59" y="25" width="1861" height="1055" extended-state="6" />
     <layout>
       <window_info id="Captures" order="0" side_tool="true" weight="0.25" />
-      <window_info active="true" content_ui="combo" id="Project" order="1" visible="true" weight="0.14325069" />
+      <window_info content_ui="combo" id="Project" order="1" visible="true" weight="0.14325069" />
       <window_info id="Structure" order="2" side_tool="true" />
       <window_info id="Favorites" order="3" side_tool="true" />
       <window_info id="Build Variants" order="4" side_tool="true" />
@@ -304,13 +306,13 @@
       <window_info id="Capture Tool" order="7" />
       <window_info id="Resources Explorer" order="8" />
       <window_info anchor="bottom" id="Run" order="0" weight="0.32963374" />
-      <window_info anchor="bottom" id="Logcat" order="1" weight="0.33962265" />
+      <window_info active="true" anchor="bottom" id="Logcat" order="1" visible="true" weight="0.4117647" />
       <window_info anchor="bottom" id="TODO" order="2" weight="0.32963374" />
       <window_info anchor="bottom" id="Debug" order="3" />
       <window_info anchor="bottom" id="Terminal" order="4" />
       <window_info anchor="bottom" id="Event Log" order="5" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="6" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Build" order="7" visible="true" weight="0.33851278" />
+      <window_info anchor="bottom" id="Build" order="7" weight="0.33851278" />
       <window_info anchor="bottom" id="Android Profiler" order="8" />
       <window_info anchor="bottom" id="Find" order="9" weight="0.32901832" />
       <window_info anchor="right" id="Device File Explorer" order="0" side_tool="true" />
@@ -347,12 +349,12 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/AndroidManifest.xml">
+      <provider editor-type-id="android-manifest" />
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-178">
           <caret line="15" column="70" selection-start-line="15" selection-start-column="70" selection-end-line="15" selection-end-column="70" />
         </state>
       </provider>
-      <provider editor-type-id="android-manifest" />
     </entry>
     <entry file="file://$USER_HOME$/Android/Sdk/sources/android-28/android/os/AsyncTask.java">
       <provider selected="true" editor-type-id="text-editor">
@@ -396,20 +398,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/Android/Sdk/sources/android-28/android/os/Build.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="192">
-          <caret line="884" column="32" selection-start-line="884" selection-start-column="32" selection-end-line="884" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/AccelerometerService.kt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="49" column="9" lean-forward="true" selection-start-line="49" selection-start-column="9" selection-end-line="49" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/build.gradle">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="465">
@@ -417,48 +405,61 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/User.kt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="9" column="16" selection-start-line="9" selection-start-column="16" selection-end-line="9" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/MainActivity.kt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-5670">
-          <caret line="9" column="30" lean-forward="true" selection-start-line="9" selection-end-line="10" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/BatteryMonitoringService.kt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1384">
-          <caret line="93" column="1" selection-start-line="93" selection-start-column="1" selection-end-line="93" selection-end-column="1" />
-          <folding>
-            <element signature="e#37#407#0" expanded="true" />
-            <element signature="e#3559#3587#1" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/Functions.kt">
       <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="35" lean-forward="true" selection-start-column="35" selection-end-column="35" />
+        <state relative-caret-position="255">
+          <caret line="17" column="5" lean-forward="true" selection-start-line="17" selection-start-column="5" selection-end-line="17" selection-end-column="5" />
           <folding>
-            <element signature="e#37#466#0" expanded="true" />
+            <element signature="e#37#89#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Android/Sdk/sources/android-28/android/os/Build.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="167">
+          <caret line="790" column="32" selection-start-line="790" selection-start-column="32" selection-end-line="790" selection-end-column="32" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/LocationUpdateService.kt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1144">
-          <caret line="148" column="42" selection-start-line="148" selection-start-column="42" selection-end-line="148" selection-end-column="42" />
+        <state relative-caret-position="-300">
+          <caret line="85" column="5" selection-start-line="85" selection-start-column="5" selection-end-line="85" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/BatteryMonitoringService.kt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1215">
+          <caret line="93" column="1" selection-start-line="93" selection-start-column="1" selection-end-line="93" selection-end-column="1" />
           <folding>
-            <element signature="e#6279#6307#1" expanded="true" />
+            <element signature="e#37#407#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/User.kt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret line="13" column="45" selection-start-line="13" selection-start-column="45" selection-end-line="13" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/MainActivity.kt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="375">
+          <caret line="325" column="16" lean-forward="true" selection-start-line="325" selection-start-column="16" selection-end-line="326" selection-end-column="50" />
+          <folding>
+            <element signature="e#37#2251#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/example/geocommunicator/AccelerometerService.kt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="158" column="46" selection-start-line="158" selection-start-column="46" selection-end-line="158" selection-end-column="46" />
         </state>
       </provider>
     </entry>

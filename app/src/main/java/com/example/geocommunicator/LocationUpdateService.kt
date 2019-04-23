@@ -1,12 +1,9 @@
 package com.example.geocommunicator
 
-import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationListener
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -14,16 +11,11 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
-import java.text.*
-import java.time.format.FormatStyle
-import java.util.*
 
 class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener {
@@ -120,6 +112,11 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
                 val lastLocation = locationResult.lastLocation
                 val horizontalAccuracy = lastLocation.accuracy
                 val altitude = lastLocation.altitude
+                val gpsDateTime = Functions().epochToDate(lastLocation.time)
+                val gpsDate = gpsDateTime.first
+                val gpsTime = gpsDateTime.second
+
+                Log.d(TAG, lastLocation.time.toString())
 
                 /* Broadcast Location Parameters */
                 val intent = Intent("Location")
@@ -128,7 +125,8 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
                 intent.putExtra("longitude", latLng.longitude.toString())
                 intent.putExtra("accuracy", horizontalAccuracy.toString())
                 intent.putExtra("speed", lastLocation.speed.toString())
-                intent.putExtra("locationTime", epochToDate(lastLocation.time))
+                intent.putExtra("locationDate", gpsDate)
+                intent.putExtra("locationTime", gpsTime)
                 intent.putExtra("altitude", altitude.toString())
                 intent.putExtra("deviceID", deviceID)
 
@@ -136,14 +134,6 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
                 }
             }
         }
-
-    private fun epochToDate(timestamp : Long): String {
-        val date: Date = java.util.Date(timestamp)
-        val sdf: SimpleDateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
-        val formattedDate = sdf.format(date)
-        //Log.d(TAG, formattedDate)
-        return formattedDate
-    }
 
     private fun startForeground() {
         val notificationIntent = Intent(this, MainActivity::class.java)

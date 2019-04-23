@@ -117,7 +117,8 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     var longitude = intent.getStringExtra("longitude")
                     var accuracy = intent.getStringExtra("accuracy")
                     var speed = intent.getStringExtra("speed")
-                    var time = intent.getStringExtra("locationTime")
+                    var locationDate = intent.getStringExtra("locationDate")
+                    var locationTime = intent.getStringExtra("locationTime")
                     var altitude = intent.getStringExtra("altitude")
                     var deviceID = intent.getStringExtra("deviceID")
 
@@ -138,7 +139,8 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     Log.d(LTAG, "Got latitude: $latitude")
                     Log.d(LTAG, "Got accuracy: $accuracy")
                     Log.d(LTAG, "Got speed: $speed")
-                    Log.d(LTAG, "Got time: $time")
+                    Log.d(LTAG, "Got date: $locationDate")
+                    Log.d(LTAG, "Got time: $locationTime")
                     Log.d(LTAG, "Got altitude: $altitude")
 
                     /* Update TextViews */
@@ -151,10 +153,11 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     lngUpdateTextView.setText(strLongitude)
 
                     /* Create JSON object to be sent */
+                    // Add locationTime as well
                     val message = createJSON(
                             deviceID, altitude.toString(), accuracy.toString(),
-                            latitude.toString(), longitude.toString(), time,
-                            speed.toString())
+                            latitude.toString(), longitude.toString(), locationDate,
+                            locationTime, speed.toString())
                     Log.d(TAG, message)
 
                     /* Update database with sensor information */
@@ -164,19 +167,34 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     /* Update database with location information */
                     user = user.copy(deviceID = deviceID, latitude = latitude.toDouble(),
                             longitude = longitude.toDouble(), horizontalAccuracy = accuracy.toDouble(), speed = speed.toFloat(),
-                            gpsUpdateTime = time, altitude = altitude.toDouble())
+                            date = locationDate, locationUpdateTime = locationTime, altitude = altitude.toDouble())
                     firebaseConstructor.updateUserInfo(user)
                 }
 
                 "Acceleration" -> {
                     val acceleration = intent.getStringExtra("acceleration")
+                    val accTime = intent.getStringExtra("accTime")
                     val strAcceleration = "Acceleration: $acceleration"
                     accUpdateTextView.invalidate()
                     accUpdateTextView.setText(strAcceleration)
                     //Log.d(RTAG, "Got acceleration: $acceleration")
-                    user = user.copy(acceleration = acceleration.toDouble())
+                    user = user.copy(acceleration = acceleration.toDouble(), accelerationUpdateTime = accTime)
                     firebaseConstructor.updateUserInfo(user)
 
+                }
+
+                "Pressure" -> {
+                    val pressure = intent.getStringExtra("pressure")
+                    user = user.copy(pressure = pressure.toDouble())
+                    firebaseConstructor.updateUserInfo(user)
+                    //Log.d(RTAG, "Pressure: " + pressure.toString())
+                }
+
+                "Light" -> {
+                    val lightLevel = intent.getStringExtra("lightLevel")
+                    user = user.copy(lightLevel = lightLevel.toDouble())
+                    firebaseConstructor.updateUserInfo(user)
+                    //Log.d(RTAG, "Pressure: " + pressure.toString())
                 }
 
                 "Battery" -> {
@@ -288,6 +306,8 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         intentFilter.addAction("Activity")
         intentFilter.addAction("Location")
         intentFilter.addAction("Acceleration")
+        intentFilter.addAction("Pressure")
+        intentFilter.addAction("Light")
         intentFilter.addAction("Battery")
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, intentFilter)
@@ -316,8 +336,8 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     }
 
     private fun createJSON(IMEI : String, altitude : String, accuracy : String,
-                           latitude : String, longitude : String, sampleDateTime : String,
-                           speed : String) : String {
+                           latitude : String, longitude : String, locationDate : String,
+                           locationTime : String, speed : String) : String {
 
         val item = JSONObject()
         item.put("type", "Gateway")
@@ -330,15 +350,10 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         imei.put("type", "string")
         imei.put("value", IMEI)
 
-        val jAltitude = JSONObject()
-        jAltitude.put("name", "altitude")
-        jAltitude.put("type", "string")
-        jAltitude.put("value", altitude)
-
-        val jHorizontalAccuracy = JSONObject()
-        jHorizontalAccuracy.put("name", "horizontalAccuracy")
-        jHorizontalAccuracy.put("type", "string")
-        jHorizontalAccuracy.put("value", accuracy)
+        val jLocationDate = JSONObject()
+        jLocationDate.put("name", "date")
+        jLocationDate.put("type", "string")
+        jLocationDate.put("value", locationDate)
 
         val jLatitude = JSONObject()
         jLatitude.put("name", "latitude")
@@ -350,24 +365,35 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         jLongitude.put("type", "string")
         jLongitude.put("value", longitude)
 
-        val jSampleDateTime = JSONObject()
-        jSampleDateTime.put("name", "sampleDateTime")
-        jSampleDateTime.put("type", "string")
-        jSampleDateTime.put("value", sampleDateTime)
+        val jAltitude = JSONObject()
+        jAltitude.put("name", "altitude")
+        jAltitude.put("type", "string")
+        jAltitude.put("value", altitude)
+
+        val jHorizontalAccuracy = JSONObject()
+        jHorizontalAccuracy.put("name", "horizontalAccuracy")
+        jHorizontalAccuracy.put("type", "string")
+        jHorizontalAccuracy.put("value", accuracy)
 
         val jSpeed = JSONObject()
         jSpeed.put("name", "speed")
         jSpeed.put("type", "string")
         jSpeed.put("value", speed)
 
+        val jLocationTime = JSONObject()
+        jLocationTime.put("name", "locationUpdateTime")
+        jLocationTime.put("type", "string")
+        jLocationTime.put("value", locationTime)
+
         val attributes = JSONArray()
         attributes.put(imei)
-        attributes.put(jAltitude)
-        attributes.put(jHorizontalAccuracy)
+        attributes.put(jLocationDate)
         attributes.put(jLatitude)
         attributes.put(jLongitude)
-        attributes.put(jSampleDateTime)
+        attributes.put(jAltitude)
+        attributes.put(jHorizontalAccuracy)
         attributes.put(jSpeed)
+        attributes.put(jLocationTime)
 
         // Add all attributes
         item.put("attributes", attributes)
