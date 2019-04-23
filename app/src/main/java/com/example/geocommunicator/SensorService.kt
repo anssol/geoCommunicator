@@ -12,6 +12,7 @@ import android.hardware.SensorManager
 import android.content.Context.SENSOR_SERVICE
 import androidx.core.content.ContextCompat.getSystemService
 import android.content.Context.SENSOR_SERVICE
+import android.icu.text.DecimalFormat
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
@@ -20,7 +21,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import java.text.SimpleDateFormat
 import java.util.*
 
-class AccelerometerService : Service(), SensorEventListener {
+class SensorService : Service(), SensorEventListener {
 
     private lateinit var mSensorManager: SensorManager
     private lateinit var mSensorListener: SensorEventListener
@@ -46,7 +47,7 @@ class AccelerometerService : Service(), SensorEventListener {
     // Listen for shake events?
     //private lateinit var mSensorListener: ShakeEventListener
 
-    private val TAG = "AccelerometerService"
+    private val TAG = "SensorService"
     var count = 0
 
     override fun onCreate() {
@@ -64,18 +65,22 @@ class AccelerometerService : Service(), SensorEventListener {
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
         // Add new sensors here
-        val accSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        //val laccSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
-        val prSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
-        //val tempSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE)
+        val accelerationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         val lightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
 
+        /* Other sensors. These are left out for now */
+        //val laccSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+        //val prSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
+        //val tempSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE)
+
         // Register sensors here
-        mSensorManager.registerListener(this, accSensor, SensorManager.SENSOR_DELAY_NORMAL)
-        //mSensorManager.registerListener(this, laccSensor, SensorManager.SENSOR_DELAY_NORMAL)
-        mSensorManager.registerListener(this, prSensor, SensorManager.SENSOR_DELAY_NORMAL)
-        //mSensorManager.registerListener(this, tempSensor, SensorManager.SENSOR_DELAY_NORMAL)
+        mSensorManager.registerListener(this, accelerationSensor, SensorManager.SENSOR_DELAY_NORMAL)
         mSensorManager.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL)
+
+        /* Other sensors. These are left out for now */
+        //mSensorManager.registerListener(this, laccSensor, SensorManager.SENSOR_DELAY_NORMAL)
+        //mSensorManager.registerListener(this, prSensor, SensorManager.SENSOR_DELAY_NORMAL)
+        //mSensorManager.registerListener(this, tempSensor, SensorManager.SENSOR_DELAY_NORMAL)
 
         //then you should return sticky
         return Service.START_STICKY
@@ -121,13 +126,13 @@ class AccelerometerService : Service(), SensorEventListener {
                     var velocity = Math.sqrt(vx * vx + vy * vy + vz * vz)
 
                     // Set number of decimal points
-                    acceleration = String.format(Locale.US, "%.5f", acceleration).toDouble()
-                    velocity = String.format(Locale.US, "%.5f", velocity).toDouble()
+                    acceleration = String.format(Locale.US, "%.3f", acceleration).toDouble()
+                    velocity = String.format(Locale.US, "%.3f", velocity).toDouble()
 
                     // Extract Time information
                     val accEpochTime = (Date().getTime() - SystemClock.elapsedRealtime()) * 1000000 + event.timestamp
                     val accDateTime = Functions().epochToDate(accEpochTime / 1000000L)
-                    val accTime = accDateTime.second
+                    val accelerationUpdateTime = accDateTime.second
 
                     // Debug
                     //Log.d(TAG, "acceleration: " + acceleration.toString())
@@ -136,7 +141,7 @@ class AccelerometerService : Service(), SensorEventListener {
                     // Broadcast Intent
                     val intent = Intent("Acceleration")
                     intent.putExtra("acceleration", acceleration.toString())
-                    intent.putExtra("accTime", accTime)
+                    intent.putExtra("accelerationUpdateTime", accelerationUpdateTime)
                     LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
                 }
             }
@@ -145,23 +150,39 @@ class AccelerometerService : Service(), SensorEventListener {
                 val currentPressure = event.values[0].toDouble()
                 val pressure = (alpha * currentPressure) + (1 - alpha) * filteredPressure
                 //Log.d(TAG, "Pressure: " + pressure.toString())
-                // Broadcast Intent
 
+                // Extract Time information
+                val pressureEpochTime = (Date().getTime() - SystemClock.elapsedRealtime()) * 1000000 + event.timestamp
+                val pressureDateTime = Functions().epochToDate(pressureEpochTime / 1000000L)
+                val pressureUpdateTime = pressureDateTime.second
+
+                // Broadcast Intent
                 val intent = Intent("Pressure")
                 intent.putExtra("pressure", pressure.toString())
-                //intent.putExtra("accTime", pressureTime)
+                intent.putExtra("pressureUpdateTime", pressureUpdateTime)
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
 
             Sensor.TYPE_LIGHT -> {
                 // Yields light level in lux (lx)
-                val lightLevel = event.values[0].toDouble()
+                val lightLevel = event.values[0].toInt()
                 //Log.d(TAG, "Light Levels: " + lux)
 
+                // Extract Time information
+                val lightEpochTime = (Date().getTime() - SystemClock.elapsedRealtime()) * 1000000 + event.timestamp
+                val lightDateTime = Functions().epochToDate(lightEpochTime / 1000000L)
+                val lightUpdateTime = lightDateTime.second
+
+                // Broadcast Intent
                 val intent = Intent("Light")
                 intent.putExtra("lightLevel", lightLevel.toString())
-                //intent.putExtra("accTime", pressureTime)
+                intent.putExtra("lightUpdateTime", lightUpdateTime)
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+            }
+
+            Sensor.TYPE_AMBIENT_TEMPERATURE -> {
+                // Not many phones have this. Useless?
+                Log.d(TAG, "Temperature!")
             }
         }
 

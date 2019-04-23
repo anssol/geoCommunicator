@@ -57,8 +57,6 @@ import android.icu.text.DecimalFormat
 import androidx.annotation.RequiresApi
 
 // Todo: Update the database with all the information every 1 second?
-// Todo: Adapt SampleDateTime to fit with the update frequency
-// Todo: CPU?
 // Todo: Distance to particular place?
 class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
@@ -173,28 +171,31 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
 
                 "Acceleration" -> {
                     val acceleration = intent.getStringExtra("acceleration")
-                    val accTime = intent.getStringExtra("accTime")
+                    val accelerationUpdateTime = intent.getStringExtra("accelerationUpdateTime")
                     val strAcceleration = "Acceleration: $acceleration"
                     accUpdateTextView.invalidate()
                     accUpdateTextView.setText(strAcceleration)
                     //Log.d(RTAG, "Got acceleration: $acceleration")
-                    user = user.copy(acceleration = acceleration.toDouble(), accelerationUpdateTime = accTime)
+                    user = user.copy(acceleration = acceleration.toDouble(), accelerationUpdateTime = accelerationUpdateTime)
                     firebaseConstructor.updateUserInfo(user)
 
                 }
 
                 "Pressure" -> {
                     val pressure = intent.getStringExtra("pressure")
-                    user = user.copy(pressure = pressure.toDouble())
+                    var pressureUpdateTime = intent.getStringExtra("lightUpdateTime")
+                    user = user.copy(pressure = pressure.toDouble(), pressureUpdateTime = pressureUpdateTime)
                     firebaseConstructor.updateUserInfo(user)
                     //Log.d(RTAG, "Pressure: " + pressure.toString())
                 }
 
                 "Light" -> {
-                    val lightLevel = intent.getStringExtra("lightLevel")
-                    user = user.copy(lightLevel = lightLevel.toDouble())
+                    var lightLevel = intent.getStringExtra("lightLevel")
+                    var lightUpdateTime = intent.getStringExtra("lightUpdateTime")
+
+                    user = user.copy(lightLevel = lightLevel.toInt(), lightUpdateTime = lightUpdateTime)
                     firebaseConstructor.updateUserInfo(user)
-                    //Log.d(RTAG, "Pressure: " + pressure.toString())
+                    //Log.d(RTAG, "Light Level: " + lightLevel.toString())
                 }
 
                 "Battery" -> {
@@ -277,7 +278,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         locationServiceIntent!!.putExtra("deviceID", deviceID)
 
         // Sensor/Accelerometer Service
-        sensorServiceIntent = Intent(this, AccelerometerService::class.java)
+        sensorServiceIntent = Intent(this, SensorService::class.java)
 
         // Battery Service
         batteryServiceIntent = Intent(this, BatteryMonitoringService::class.java)
@@ -314,7 +315,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     }
 
     private fun stopServices() {
-        stopService(Intent(this, AccelerometerService::class.java))
+        stopService(Intent(this, SensorService::class.java))
         stopService(Intent(this, LocationUpdateService::class.java))
         //stopServices(Intent(this, BatteryMonitoringService::class.java))
     }
