@@ -12,8 +12,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import android.os.AsyncTask
-import android.os.BatteryManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -32,32 +30,13 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.app.ActivityCompat.startActivityForResult
-import androidx.core.content.ContextCompat.getSystemService
-import androidx.core.content.ContextCompat.startForegroundService
 import com.example.geocommunicator.Constants.Companion.LOCATION_PERMISSION_REQUEST_CODE
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import java.text.SimpleDateFormat
 import java.util.*
-import com.loopj.android.http.*;
-import cz.msebera.android.httpclient.NameValuePair
-import cz.msebera.android.httpclient.client.methods.HttpPost
-import cz.msebera.android.httpclient.message.BasicNameValuePair
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
-import java.io.*
-import java.lang.Exception
-import java.net.HttpURLConnection
-import java.net.URL
-import java.nio.charset.Charset
-import kotlin.collections.ArrayList
 import android.icu.text.DecimalFormat
 import androidx.annotation.RequiresApi
 
-// Todo: Update the database with all the information every 1 second?
-// Todo: Distance to particular place?
+// Todo: Reduce the rate of updates from Sensors.
+// Todo: Address gravity element?
 class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
 
@@ -92,6 +71,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
 
     // URL LTU database server
     private val url = "http://130.240.134.129:8080/se.ltu.ssr.webapp/rest/fiwareproxy/ngsi10/updateContext/"
+    private lateinit var jsonMessage : String
 
     // Firebase reference
     private lateinit var firebaseConstructor : FirebaseConstructor
@@ -103,18 +83,23 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
             when (intent.action) {
 
                 "Activity" -> {
-                    // Get Activity data
+                    /**
+                     * The Activity Data is used to give notifications to the user,
+                     * e.g. if Walking, Running, Biking, In Car, etc.
+                     */
+                    /* Get Activity data */
                     val message = intent.getStringExtra("Message")
                     Log.d(RTAG, "Got message: $message")
+
+                    /* Display the detected activity as a notification to the user. */
                     displayNotification(message)
                 }
 
                 "Location" -> {
-                    // Get extra data included in the Intent
+                    /* Get extra data included in the Intent */
                     var latitude = intent.getStringExtra("latitude")
                     var longitude = intent.getStringExtra("longitude")
                     var accuracy = intent.getStringExtra("accuracy")
-                    var speed = intent.getStringExtra("speed")
                     var locationDate = intent.getStringExtra("locationDate")
                     var locationTime = intent.getStringExtra("locationTime")
                     var altitude = intent.getStringExtra("altitude")
@@ -129,14 +114,12 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     /*
                     latitude = formatter.format(latitude.toDouble())
                     longitude = formatter.format(longitude.toDouble())
-                    speed = formatter.format(speed.toFloat())
                     */
 
                     /* Logs */
                     Log.d(LTAG, "Got longitude: $longitude")
                     Log.d(LTAG, "Got latitude: $latitude")
                     Log.d(LTAG, "Got accuracy: $accuracy")
-                    Log.d(LTAG, "Got speed: $speed")
                     Log.d(LTAG, "Got date: $locationDate")
                     Log.d(LTAG, "Got time: $locationTime")
                     Log.d(LTAG, "Got altitude: $altitude")
@@ -150,52 +133,74 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     lngUpdateTextView.invalidate()
                     lngUpdateTextView.setText(strLongitude)
 
-                    /* Create JSON object to be sent */
-                    // Add locationTime as well
-                    val message = createJSON(
-                            deviceID, altitude.toString(), accuracy.toString(),
-                            latitude.toString(), longitude.toString(), locationDate,
-                            locationTime, speed.toString())
-                    Log.d(TAG, message)
-
-                    /* Update database with sensor information */
-                    //SendDeviceDetails().execute(url, message)
-
-                    Log.d(LTAG, "Updating Firease with Location Information")
-                    /* Update database with location information */
+                    /* Update User with received device and location information */
                     user = user.copy(deviceID = deviceID, latitude = latitude.toDouble(),
-                            longitude = longitude.toDouble(), horizontalAccuracy = accuracy.toDouble(), speed = speed.toFloat(),
+                            longitude = longitude.toDouble(), horizontalAccuracy = accuracy.toDouble(),
                             date = locationDate, locationUpdateTime = locationTime, altitude = altitude.toDouble())
+
+                    /* Update Firebase */
+                    Log.d(LTAG, "Updating Firebase with Location Information")
                     firebaseConstructor.updateUserInfo(user)
+
+                    /* Create JSON Object and update LTU database */
+                    jsonMessage = Functions().createJSON(user)
+                    Log.d(TAG, jsonMessage)
+                    //SendDeviceDetails().execute(url, message)
                 }
 
                 "Acceleration" -> {
                     val acceleration = intent.getStringExtra("acceleration")
                     val accelerationUpdateTime = intent.getStringExtra("accelerationUpdateTime")
                     val strAcceleration = "Acceleration: $acceleration"
+
+                    /* Logs */
+                    //Log.d(RTAG, "Got acceleration: $acceleration")
+                    //Log.d(RTAG, "Got acceleration update time: $accelerationUpdateTime")
+
+                    /* Update the TextViews */
                     accUpdateTextView.invalidate()
                     accUpdateTextView.setText(strAcceleration)
-                    //Log.d(RTAG, "Got acceleration: $acceleration")
+
+                    /* Update User with received acceleration information */
                     user = user.copy(acceleration = acceleration.toDouble(), accelerationUpdateTime = accelerationUpdateTime)
+
+                    /* Update User info in Firebase */
                     firebaseConstructor.updateUserInfo(user)
 
+                    /* Create JSON Object and update LTU database */
+                    jsonMessage = Functions().createJSON(user)
+                    Log.d(TAG, jsonMessage)
+                    //SendDeviceDetails().execute(url, message)
                 }
 
                 "Pressure" -> {
+                    /* This parameter is omitted for now.
+                    * Uncomment its corresponding listener in 'SensorService' to access it.
+                    */
                     val pressure = intent.getStringExtra("pressure")
                     var pressureUpdateTime = intent.getStringExtra("lightUpdateTime")
+
+                    /* Update User with received pressure information */
                     user = user.copy(pressure = pressure.toDouble(), pressureUpdateTime = pressureUpdateTime)
+
+                    /* Update User info in Firebase */
                     firebaseConstructor.updateUserInfo(user)
-                    //Log.d(RTAG, "Pressure: " + pressure.toString())
                 }
 
                 "Light" -> {
                     var lightLevel = intent.getStringExtra("lightLevel")
                     var lightUpdateTime = intent.getStringExtra("lightUpdateTime")
 
+                    /* Update User with received light information */
                     user = user.copy(lightLevel = lightLevel.toInt(), lightUpdateTime = lightUpdateTime)
+
+                    /* Update User info in Firebase */
                     firebaseConstructor.updateUserInfo(user)
-                    //Log.d(RTAG, "Light Level: " + lightLevel.toString())
+
+                    /* Create JSON Object and update LTU database */
+                    jsonMessage = Functions().createJSON(user)
+                    Log.d(TAG, jsonMessage)
+                    //SendDeviceDetails().execute(url, message)
                 }
 
                 "Battery" -> {
@@ -214,6 +219,10 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                         Log.d(BTAG, "AC charge: " + acCharge)
                     }
                     user = user.copy(batteryLevel = batteryLevel, isCharging = isCharging)
+
+                    jsonMessage = Functions().createJSON(user)
+                    Log.d(TAG, jsonMessage)
+
                     firebaseConstructor.updateUserInfo(user)
                 }
             }
@@ -317,7 +326,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     private fun stopServices() {
         stopService(Intent(this, SensorService::class.java))
         stopService(Intent(this, LocationUpdateService::class.java))
-        //stopServices(Intent(this, BatteryMonitoringService::class.java))
+        stopService(Intent(this, BatteryMonitoringService::class.java))
     }
 
     private fun startUpdates(v : View) {
@@ -334,86 +343,6 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     private fun stopUpdates(v : View) {
         Toast.makeText(this, "Stopping Updates", Toast.LENGTH_LONG).show()
         stopServices()
-    }
-
-    private fun createJSON(IMEI : String, altitude : String, accuracy : String,
-                           latitude : String, longitude : String, locationDate : String,
-                           locationTime : String, speed : String) : String {
-
-        val item = JSONObject()
-        item.put("type", "Gateway")
-        item.put("isPattern", "false")
-        item.put("id", "UppsalaUni_01")
-
-        // Create attributes
-        val imei = JSONObject()
-        imei.put("name", "imei")
-        imei.put("type", "string")
-        imei.put("value", IMEI)
-
-        val jLocationDate = JSONObject()
-        jLocationDate.put("name", "date")
-        jLocationDate.put("type", "string")
-        jLocationDate.put("value", locationDate)
-
-        val jLatitude = JSONObject()
-        jLatitude.put("name", "latitude")
-        jLatitude.put("type", "string")
-        jLatitude.put("value", latitude)
-
-        val jLongitude = JSONObject()
-        jLongitude.put("name", "longitude")
-        jLongitude.put("type", "string")
-        jLongitude.put("value", longitude)
-
-        val jAltitude = JSONObject()
-        jAltitude.put("name", "altitude")
-        jAltitude.put("type", "string")
-        jAltitude.put("value", altitude)
-
-        val jHorizontalAccuracy = JSONObject()
-        jHorizontalAccuracy.put("name", "horizontalAccuracy")
-        jHorizontalAccuracy.put("type", "string")
-        jHorizontalAccuracy.put("value", accuracy)
-
-        val jSpeed = JSONObject()
-        jSpeed.put("name", "speed")
-        jSpeed.put("type", "string")
-        jSpeed.put("value", speed)
-
-        val jLocationTime = JSONObject()
-        jLocationTime.put("name", "locationUpdateTime")
-        jLocationTime.put("type", "string")
-        jLocationTime.put("value", locationTime)
-
-        val attributes = JSONArray()
-        attributes.put(imei)
-        attributes.put(jLocationDate)
-        attributes.put(jLatitude)
-        attributes.put(jLongitude)
-        attributes.put(jAltitude)
-        attributes.put(jHorizontalAccuracy)
-        attributes.put(jSpeed)
-        attributes.put(jLocationTime)
-
-        // Add all attributes
-        item.put("attributes", attributes)
-
-        val elements = JSONArray()
-        elements.put(item)
-        val contextElements = JSONObject()
-        contextElements.put("contextElements", elements)
-        contextElements.put("updateAction", "APPEND")
-
-        val auth = JSONObject()
-        auth.put("username", Constants.USERNAME)
-        auth.put("password", Constants.PASSWORD)
-        contextElements.put("auth", auth)
-
-        val message: String
-        message = contextElements.toString()
-
-        return message
     }
 
     private fun getDevicePermission() {

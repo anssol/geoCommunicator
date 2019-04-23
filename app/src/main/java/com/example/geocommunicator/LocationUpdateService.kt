@@ -39,15 +39,6 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
         return Service.START_STICKY
     }
 
-    /*
-    override fun onCreate() {
-        super.onCreate()
-        startForeground(1, Notification())
-        Log.d(TAG, "Service started")
-        buildGoogleApiClient()
-    }
-    */
-
     private fun buildGoogleApiClient() {
         // Todo: Add Activity API
         mGoogleApiClient = GoogleApiClient.Builder(this)
@@ -124,7 +115,6 @@ class LocationUpdateService : Service(), GoogleApiClient.ConnectionCallbacks,
                 intent.putExtra("latitude", latLng.latitude.toString())
                 intent.putExtra("longitude", latLng.longitude.toString())
                 intent.putExtra("accuracy", horizontalAccuracy.toString())
-                intent.putExtra("speed", lastLocation.speed.toString())
                 intent.putExtra("locationDate", gpsDate)
                 intent.putExtra("locationTime", gpsTime)
                 intent.putExtra("altitude", altitude.toString())

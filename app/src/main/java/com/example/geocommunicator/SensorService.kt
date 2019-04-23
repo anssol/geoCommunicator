@@ -68,7 +68,7 @@ class SensorService : Service(), SensorEventListener {
         val accelerationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         val lightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
 
-        /* Other sensors. These are left out for now */
+        /* Other sensors. These are omitted for now. */
         //val laccSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         //val prSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
         //val tempSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE)
@@ -77,7 +77,7 @@ class SensorService : Service(), SensorEventListener {
         mSensorManager.registerListener(this, accelerationSensor, SensorManager.SENSOR_DELAY_NORMAL)
         mSensorManager.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL)
 
-        /* Other sensors. These are left out for now */
+        /* Other sensors. These are omitted for now. */
         //mSensorManager.registerListener(this, laccSensor, SensorManager.SENSOR_DELAY_NORMAL)
         //mSensorManager.registerListener(this, prSensor, SensorManager.SENSOR_DELAY_NORMAL)
         //mSensorManager.registerListener(this, tempSensor, SensorManager.SENSOR_DELAY_NORMAL)
@@ -92,13 +92,17 @@ class SensorService : Service(), SensorEventListener {
         * 6. Pressure
         */
         val sensor = event.sensor
+
+        /* Logs */
         //Log.d(TAG, "Sensor: " + sensor.toString())
         //Log.d(TAG, "Sensor Type: " + sensor.type.toString())
         //Log.d(TAG, "Sensor Pressure Type: " + Sensor.TYPE_PRESSURE.toString())
+
         /***
          * The Accelerometer returns raw accelerometer events, with minimal or no processing at all.
          * To determine acceleration in 2D, remove the gravity element from the sensor readings.
          */
+        // Todo: Remove Gravity Element
         when (sensor.type) {
 
             Sensor.TYPE_ACCELEROMETER -> {
@@ -185,72 +189,6 @@ class SensorService : Service(), SensorEventListener {
                 Log.d(TAG, "Temperature!")
             }
         }
-
-        /*
-        if (sensor.type == Sensor.TYPE_ACCELEROMETER) {
-            // Update acceleration at custom rate
-            if (System.currentTimeMillis() - lastSaved > ACCELERATION_RATE_MS) {
-                // Get current time
-                lastSaved = System.currentTimeMillis()
-
-                // Determine the time difference between updates (deltaT)
-                val deltaT = lastSaved - lastEvent
-                lastEvent = lastSaved
-
-                // Get samples
-                val x = event.values[0].toDouble()
-                val y = event.values[1].toDouble()
-                val z = event.values[2].toDouble()
-
-                // Calculate velocities in 3D
-                // Note: It's better to approximate the velocity based on GPS coordinates.
-                val vx = vx + deltaT * x
-                val vy = vy + deltaT * x
-                val vz = vz + deltaT * x
-
-                // Calculate acceleration and linear velocity
-                var acceleration = Math.sqrt(x * x + y * y + z * z)
-                var velocity = Math.sqrt(vx * vx + vy * vy + vz * vz)
-
-                // Set number of decimal points
-                acceleration = String.format(Locale.US, "%.5f", acceleration).toDouble()
-                velocity = String.format(Locale.US, "%.5f", velocity).toDouble()
-
-                // Extract Time information
-                val accEpochTime = (Date().getTime() - SystemClock.elapsedRealtime()) * 1000000 + event.timestamp
-                val accDateTime = Functions().epochToDate(accEpochTime / 1000000L)
-                val accTime = accDateTime.second
-
-                // Debug
-                //Log.d(TAG, "acceleration: " + acceleration.toString())
-                //Log.d(TAG, "velocity: " + velocity.toString())
-
-                // Broadcast Intent
-                val intent = Intent("Acceleration")
-                intent.putExtra("acceleration", acceleration.toString())
-                intent.putExtra("accTime", accTime)
-                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-            }
-
-            else if (sensor.type == Sensor.TYPE_LINEAR_ACCELERATION) {
-                Log.d(TAG, "Linear Acceleration")
-            }
-
-            else if (sensor.type == Sensor.TYPE_PRESSURE) {
-                //Log.d(TAG, "Pressure")
-                val currentPressure = event.values[0].toDouble()
-                val pressure = (alpha * currentPressure) + (1 - alpha) * filteredPressure
-                Log.d(TAG, "Pressure: " + pressure.toString())
-            }
-
-            else if (sensor.type == Sensor.TYPE_AMBIENT_TEMPERATURE) {
-                Log.d(TAG, "Ambient Temperature")
-                val ambientTemperature = event.values[0]
-                //Log.d(TAG, "Temperature: " + ambientTemperature)
-            }
-
-        }
-        */
     }
 
     override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
