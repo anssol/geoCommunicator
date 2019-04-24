@@ -60,6 +60,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     private lateinit var latUpdateTextView : TextView
     private lateinit var lngUpdateTextView : TextView
     private lateinit var accUpdateTextView : TextView
+    private lateinit var lightUpdateTextView : TextView
 
     // Buttons
     private lateinit var startButton : Button
@@ -191,6 +192,12 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     var lightLevel = intent.getStringExtra("lightLevel")
                     var lightUpdateTime = intent.getStringExtra("lightUpdateTime")
 
+                    /* Update the TextViews */
+                    val strLightLevel = "Ambient light (lx): $lightLevel"
+                    lightUpdateTextView.invalidate()
+                    lightUpdateTextView.setText(strLightLevel)
+
+
                     /* Update User with received light information */
                     user = user.copy(lightLevel = lightLevel.toInt(), lightUpdateTime = lightUpdateTime)
 
@@ -281,6 +288,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         latUpdateTextView = findViewById(R.id.latTextView)
         lngUpdateTextView = findViewById(R.id.lngTextView)
         accUpdateTextView = findViewById(R.id.accTextView)
+        lightUpdateTextView = findViewById(R.id.lightTextView)
 
         // Location Service
         locationServiceIntent = Intent(this, LocationUpdateService::class.java)

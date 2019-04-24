@@ -35,9 +35,16 @@ class SensorService : Service(), SensorEventListener {
     private val alpha = 0.8
 
     // Control sampling information
-    private val ACCELERATION_RATE_MS = 500
+    private val ACCELERATION_SAMPLING_RATE_MS = 500
+    private val LIGHT_SAMPLING_RATE_MS = 500
+    private val PRESSURE_SAMPLING_RATE_MS = 1000
+    private val TEMPERATURE_SAMPLING_RATE_MS = 1000
     private var lastSaved = System.currentTimeMillis()
     private var lastEvent : Long = 0
+
+    // Acceleration parameters
+    private val gravity = DoubleArray(3)
+    private val linear_acceleration = DoubleArray(3)
 
     // Velocity parameters
     private var vx = 0
@@ -74,6 +81,7 @@ class SensorService : Service(), SensorEventListener {
         //val tempSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE)
 
         // Register sensors here
+        //mSensorManager.registerListener(this, accelerationSensor, SensorManager.SENSOR_DELAY_NORMAL)
         mSensorManager.registerListener(this, accelerationSensor, SensorManager.SENSOR_DELAY_NORMAL)
         mSensorManager.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL)
 
@@ -106,7 +114,7 @@ class SensorService : Service(), SensorEventListener {
         when (sensor.type) {
 
             Sensor.TYPE_ACCELEROMETER -> {
-                if (System.currentTimeMillis() - lastSaved > ACCELERATION_RATE_MS) {
+                if (System.currentTimeMillis() - lastSaved > ACCELERATION_SAMPLING_RATE_MS) {
                     // Get current time
                     lastSaved = System.currentTimeMillis()
 
@@ -114,10 +122,15 @@ class SensorService : Service(), SensorEventListener {
                     val deltaT = lastSaved - lastEvent
                     lastEvent = lastSaved
 
+                    // Get gravity samples
+                    gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0]
+                    gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1]
+                    gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2]
+
                     // Get samples
-                    val x = event.values[0].toDouble()
-                    val y = event.values[1].toDouble()
-                    val z = event.values[2].toDouble()
+                    val x = event.values[0].toDouble() - gravity[0]
+                    val y = event.values[1].toDouble() - gravity[1]
+                    val z = event.values[2].toDouble() - gravity[2]
 
                     // Calculate velocities in 3D
                     // Note: It's better to approximate the velocity based on GPS coordinates.
@@ -151,42 +164,47 @@ class SensorService : Service(), SensorEventListener {
             }
 
             Sensor.TYPE_PRESSURE -> {
-                val currentPressure = event.values[0].toDouble()
-                val pressure = (alpha * currentPressure) + (1 - alpha) * filteredPressure
-                //Log.d(TAG, "Pressure: " + pressure.toString())
+                if (System.currentTimeMillis() - lastSaved > PRESSURE_SAMPLING_RATE_MS) {
+                    val currentPressure = event.values[0].toDouble()
+                    val pressure = (alpha * currentPressure) + (1 - alpha) * filteredPressure
+                    //Log.d(TAG, "Pressure: " + pressure.toString())
 
-                // Extract Time information
-                val pressureEpochTime = (Date().getTime() - SystemClock.elapsedRealtime()) * 1000000 + event.timestamp
-                val pressureDateTime = Functions().epochToDate(pressureEpochTime / 1000000L)
-                val pressureUpdateTime = pressureDateTime.second
+                    // Extract Time information
+                    val pressureEpochTime = (Date().getTime() - SystemClock.elapsedRealtime()) * 1000000 + event.timestamp
+                    val pressureDateTime = Functions().epochToDate(pressureEpochTime / 1000000L)
+                    val pressureUpdateTime = pressureDateTime.second
 
-                // Broadcast Intent
-                val intent = Intent("Pressure")
-                intent.putExtra("pressure", pressure.toString())
-                intent.putExtra("pressureUpdateTime", pressureUpdateTime)
-                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                    // Broadcast Intent
+                    val intent = Intent("Pressure")
+                    intent.putExtra("pressure", pressure.toString())
+                    intent.putExtra("pressureUpdateTime", pressureUpdateTime)
+                    LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                }
             }
-
             Sensor.TYPE_LIGHT -> {
-                // Yields light level in lux (lx)
-                val lightLevel = event.values[0].toInt()
-                //Log.d(TAG, "Light Levels: " + lux)
+                //if (System.currentTimeMillis() - lastSaved > LIGHT_SAMPLING_RATE_MS) {
+                    // Yields light level in lux (lx)
+                    val lightLevel = event.values[0].toInt()
+                    //Log.d(TAG, "Light Levels: " + lux)
 
-                // Extract Time information
-                val lightEpochTime = (Date().getTime() - SystemClock.elapsedRealtime()) * 1000000 + event.timestamp
-                val lightDateTime = Functions().epochToDate(lightEpochTime / 1000000L)
-                val lightUpdateTime = lightDateTime.second
+                    // Extract Time information
+                    val lightEpochTime = (Date().getTime() - SystemClock.elapsedRealtime()) * 1000000 + event.timestamp
+                    val lightDateTime = Functions().epochToDate(lightEpochTime / 1000000L)
+                    val lightUpdateTime = lightDateTime.second
 
-                // Broadcast Intent
-                val intent = Intent("Light")
-                intent.putExtra("lightLevel", lightLevel.toString())
-                intent.putExtra("lightUpdateTime", lightUpdateTime)
-                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                    // Broadcast Intent
+                    val intent = Intent("Light")
+                    intent.putExtra("lightLevel", lightLevel.toString())
+                    intent.putExtra("lightUpdateTime", lightUpdateTime)
+                    LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                //}
             }
 
             Sensor.TYPE_AMBIENT_TEMPERATURE -> {
-                // Not many phones have this. Useless?
-                Log.d(TAG, "Temperature!")
+                if (System.currentTimeMillis() - lastSaved > TEMPERATURE_SAMPLING_RATE_MS) {
+                    // Not many phones have this. Useless?
+                    Log.d(TAG, "Temperature!")
+                }
             }
         }
     }
