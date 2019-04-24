@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     /* Create JSON Object and update LTU database */
                     jsonMessage = Functions().createJSON(user)
                     Log.d(TAG, jsonMessage)
-                    //SendDeviceDetails().execute(url, message)
+                    SendDeviceDetails().execute(url, jsonMessage)
                 }
 
                 "Acceleration" -> {
@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     /* Create JSON Object and update LTU database */
                     jsonMessage = Functions().createJSON(user)
                     Log.d(TAG, jsonMessage)
-                    //SendDeviceDetails().execute(url, message)
+                    SendDeviceDetails().execute(url, jsonMessage)
                 }
 
                 "Pressure" -> {
@@ -207,7 +207,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     /* Create JSON Object and update LTU database */
                     jsonMessage = Functions().createJSON(user)
                     Log.d(TAG, jsonMessage)
-                    //SendDeviceDetails().execute(url, message)
+                    SendDeviceDetails().execute(url, jsonMessage)
                 }
 
                 "Battery" -> {
@@ -227,10 +227,13 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     }
                     user = user.copy(batteryLevel = batteryLevel, isCharging = isCharging)
 
+                    /* Update User info in Firebase */
+                    firebaseConstructor.updateUserInfo(user)
+
+                    /* Create JSON Object and update LTU database */
                     jsonMessage = Functions().createJSON(user)
                     Log.d(TAG, jsonMessage)
-
-                    firebaseConstructor.updateUserInfo(user)
+                    SendDeviceDetails().execute(url, jsonMessage)
                 }
             }
         }
@@ -351,6 +354,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     private fun stopUpdates(v : View) {
         Toast.makeText(this, "Stopping Updates", Toast.LENGTH_LONG).show()
         stopServices()
+        SendDeviceDetails().cancel(true)
     }
 
     private fun getDevicePermission() {
