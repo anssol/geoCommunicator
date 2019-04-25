@@ -28,9 +28,15 @@ class Functions {
 
         // Create attributes
         val imei = JSONObject()
-        imei.put("name", "imei")
+        imei.put("name", "deviceID")
         imei.put("type", "String")
         imei.put("value", user.deviceID)
+
+        // Create attributes
+        val jActivity = JSONObject()
+        jActivity.put("name", "activity")
+        jActivity.put("type", "String")
+        jActivity.put("value", user.activity)
 
         val jLocationDate = JSONObject()
         jLocationDate.put("name", "date")
@@ -58,7 +64,7 @@ class Functions {
         jHorizontalAccuracy.put("value", user.horizontalAccuracy)
 
         val jLocationTime = JSONObject()
-        jLocationTime.put("name", "locationUpdateTime")
+        jLocationTime.put("name", "sensorUpdateTime")
         jLocationTime.put("type", "String")
         jLocationTime.put("value", user.locationUpdateTime)
 
@@ -92,19 +98,20 @@ class Functions {
         jBatteryChargeStatus.put("type", "String")
         jBatteryChargeStatus.put("value", user.isCharging)
 
+        /* Add attributes to the JSON object */
         val attributes = JSONArray()
         attributes.put(imei)
+        attributes.put(jActivity)
         attributes.put(jLocationDate)
         attributes.put(jLatitude)
         attributes.put(jLongitude)
         attributes.put(jLocationTime)
         attributes.put(jAltitude)
         attributes.put(jHorizontalAccuracy)
-        attributes.put(jLocationTime)
         attributes.put(jAcceleration)
-        attributes.put(jAccelerationTime)
+        //attributes.put(jAccelerationTime)
         attributes.put(jLightLevel)
-        attributes.put(jLightTime)
+        //attributes.put(jLightTime)
         attributes.put(jBatteryLevel)
         attributes.put(jBatteryChargeStatus)
 

@@ -53,6 +53,7 @@ class SendDeviceDetails : AsyncTask<String, Void, String>() {
                 */
 
                 Log.d(TAG, "Response code: " + urlConnection.responseCode.toString())
+                //Log.d(TAG, "Response message: " + urlConnection.responseMessage)
 
             } catch (e : Exception) {
                 e.printStackTrace()

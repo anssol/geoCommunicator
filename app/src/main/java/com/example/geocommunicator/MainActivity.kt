@@ -35,8 +35,6 @@ import java.util.*
 import android.icu.text.DecimalFormat
 import androidx.annotation.RequiresApi
 
-// Todo: Reduce the rate of updates from Sensors.
-// Todo: Address gravity element?
 class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
 
@@ -92,6 +90,13 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     val message = intent.getStringExtra("Message")
                     Log.d(RTAG, "Got message: $message")
 
+                    user = user.copy(activity = message)
+                    firebaseConstructor.updateUserInfo(user)
+
+                    /* Create JSON Object and update LTU database */
+                    jsonMessage = Functions().createJSON(user)
+                    Log.d(TAG, jsonMessage)
+
                     /* Display the detected activity as a notification to the user. */
                     displayNotification(message)
                 }
@@ -146,6 +151,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     /* Create JSON Object and update LTU database */
                     jsonMessage = Functions().createJSON(user)
                     Log.d(TAG, jsonMessage)
+                    // Right now, the code updates the database everytime a new location value is received.
                     SendDeviceDetails().execute(url, jsonMessage)
                 }
 
@@ -171,7 +177,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     /* Create JSON Object and update LTU database */
                     jsonMessage = Functions().createJSON(user)
                     Log.d(TAG, jsonMessage)
-                    SendDeviceDetails().execute(url, jsonMessage)
+                    //SendDeviceDetails().execute(url, jsonMessage)
                 }
 
                 "Pressure" -> {
@@ -207,7 +213,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     /* Create JSON Object and update LTU database */
                     jsonMessage = Functions().createJSON(user)
                     Log.d(TAG, jsonMessage)
-                    SendDeviceDetails().execute(url, jsonMessage)
+                    //SendDeviceDetails().execute(url, jsonMessage)
                 }
 
                 "Battery" -> {
@@ -233,7 +239,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
                     /* Create JSON Object and update LTU database */
                     jsonMessage = Functions().createJSON(user)
                     Log.d(TAG, jsonMessage)
-                    SendDeviceDetails().execute(url, jsonMessage)
+                    //SendDeviceDetails().execute(url, jsonMessage)
                 }
             }
         }

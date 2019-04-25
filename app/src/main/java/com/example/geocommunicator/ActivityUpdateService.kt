@@ -68,7 +68,7 @@ class ActivityUpdateService : IntentService("ActivityUpdateService") {
             if (activity.confidence >= 75) {
                 val intent = Intent("Activity")
                 if (strType != "Still" && strType != "Unknown") {
-                    intent.putExtra("Message", strType + " : " + activity.confidence)
+                    intent.putExtra("Message", strType + ":" + activity.confidence)
                     LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
                 }
             }
