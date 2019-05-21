@@ -23,7 +23,6 @@ class SendDeviceDetails : AsyncTask<String, Void, String>() {
                 val url: URL = URL(params[0])
                 val urlConnection = url.openConnection() as HttpURLConnection
 
-
                 urlConnection.requestMethod = "POST"
                 urlConnection.doOutput = true
 
@@ -40,17 +39,6 @@ class SendDeviceDetails : AsyncTask<String, Void, String>() {
 
                 wr.flush()
                 wr.close()
-
-                /*
-                val ins = urlConnection.inputStream
-                val inputStreamReader = InputStreamReader(ins)
-
-                val inputStreamData = inputStreamReader.read()
-                while (inputStreamData != -1) {
-                    val current = inputStreamData as Char
-                    data += current
-                }
-                */
 
                 Log.d(TAG, "Response code: " + urlConnection.responseCode.toString())
                 //Log.d(TAG, "Response message: " + urlConnection.responseMessage)

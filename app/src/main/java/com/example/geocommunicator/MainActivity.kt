@@ -386,6 +386,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         }
     }
 
+    // Get device ID, i.e. IMEI number
     @SuppressLint("HardwareIds")
     private fun getDeviceID() : String {
         if (ContextCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.READ_PHONE_STATE)
@@ -419,6 +420,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
         stopService(locationServiceIntent)
     }
 
+    // Display notifications for activity, e.g. "walking", "running", "in vehicle", etc.
     fun displayNotification(strMessage : String) {
         val mBuilder: NotificationCompat.Builder = NotificationCompat.Builder(this)
             .setSmallIcon(R.mipmap.ic_launcher_round)
