@@ -8,16 +8,18 @@ Note
 * The code is written in Kotlin. It is recent language and has some key advantages over Java for making Android apps. I would recommend familiarizing with the language: https://kotlinlang.org/
 
 * The app compiles with libraries from AndroidX. It needs to be set in the project. Read more about it here: https://developer.android.com/jetpack/androidx
--------------
+
+
 
 -------------
-MainActivity:
+MainActivity
+-------------
 
 Receives sensor and GPS information from all the background services, posts them to the database, and updates the UI.
--------------
  
-
-Background services:
+----------------
+Background services
+----------------
 
 * ActivityUpdateService: Gives updates about user activity (e.g. walking, running, on bike, etc) from the goole Activity API: https://developer.android.com/reference/android/app/Activity
 
@@ -33,7 +35,15 @@ Something for future work: Geocoding: https://developer.android.com/reference/an
 * SensorService: Gives information about different sensors, e.g. accelerometer, light, temperature, etc. https://developer.android.com/guide/topics/sensors/sensors_overview
 
 
-Other functions:
-
+--------
+Other files
+--------
 * sendDeviceDetails: Updates the database with JSON objects consisting of the GPS and sensor information.
 
+* Functions: Includes a few functions, e.g. to create JSON object for the database.
+
+* User: The data structure for the 'User' object, which defines all the values of interest. Includes all the sensor and GPS values. 
+
+* FirebaseConstructor: Only interesting if experimenting with Firebase.
+
+* Constants: File including permission codes and authentication information used in the project.
