@@ -1,6 +1,6 @@
 # geoCommunicator
 
-Android app that communicates GPS and sensor information to a database. 
+Android app that communicates GPS and sensor information to a database. Works with API versions 19 - 28.
 
 ------------
 Note
@@ -8,8 +8,6 @@ Note
 * The code is written in Kotlin. It is recent language and has some key advantages over Java for making Android apps. I would recommend familiarizing with the language: https://kotlinlang.org/
 
 * The app compiles with libraries from AndroidX. It needs to be set in the project. Read more about it here: https://developer.android.com/jetpack/androidx
-
-
 
 -------------
 MainActivity
